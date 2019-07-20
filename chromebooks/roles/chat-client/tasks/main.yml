@@ -6,9 +6,5 @@
       - golang
     state: latest
 
-- name: Clone the chat code
-  git:
-    repo: 'https://github.com/baaahs/chat.git'
-    dest: '{{ baaahs_src_dir }}/chat'
-    version: master
-    force: yes
+- name: Fetch and build the client
+  command: go get github.com/baaahs/chat/bchat-tty
