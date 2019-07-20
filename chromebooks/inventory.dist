@@ -1,2 +1,2 @@
 [chat_laptops]
-debby.local ansible_user=baaahs
+sally.local ansible_user=baaahs

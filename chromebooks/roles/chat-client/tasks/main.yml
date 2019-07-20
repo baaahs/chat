@@ -25,4 +25,4 @@
   replace:
     path: /etc/systemd/system/getty@tty1.service
     regexp: '^ExecStart=(.+)$'
-    replace: 'ExecStart=-/sbin/agetty -i -n -l /home/baaahs/go/bin/bchat-tty tty1 linux'
+    replace: 'ExecStart=-/sbin/agetty -i -n -l /root/go/bin/bchat-tty tty1 linux'

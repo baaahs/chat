@@ -2,6 +2,6 @@
 
 - hosts: chat_laptops
   roles:
-    # - setup
+    - setup
     - chat-client
   become: yes
