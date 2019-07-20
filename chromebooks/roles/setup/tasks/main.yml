@@ -1,0 +1,78 @@
+---
+
+- name: Add missing key for app grid ppa
+  apt_key:
+    id: f9a8b020f741a5b52b888a88241fe6973b765fae
+    keyserver: keyserver.ubuntu.com
+
+- name: Update all packages to the latest version
+  apt:
+    update_cache: yes
+    upgrade: dist
+    allow_unauthenticated: yes
+
+- name: setting locale to {{ locale }}
+  locale_gen:
+    name: '{{ locale }}'
+    state: present
+
+- name: set timezone to {{ timezone }}
+  timezone: name={{ timezone }}
+
+- name: set keyboard layout to {{ keyboard_layout }}
+  lineinfile:
+    dest: /etc/default/keyboard
+    regexp: '^XKBLAYOUT=.*$'
+    line: 'XKBLAYOUT="{{ keyboard_layout }}"'
+  register: keyboard_layout_result
+
+- name: activate keyboard layout {{ keyboard_layout }}
+  shell: "dpkg-reconfigure -f noninteractive keyboard-configuration"
+  when: keyboard_layout_result.changed
+
+- name: install basic set of packages
+  apt:
+    pkg: 
+      - git
+      - vim
+      - htop
+      - lsof
+      - tree
+      - jq
+    state: latest
+
+- name: Update message of the day
+  template:
+    src: motd.j2
+    dest: /etc/motd
+
+- name: Get rid of stupid system motd stuff
+  file:
+    path: "/etc/update-motd.d/{{ item }}"
+    state: absent
+  with_items:
+    - 50-motd-news
+    - 80-esm
+    - 80-livepatch
+
+- name: disable print lastlog
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^PrintLastLog yes'
+    line: 'PrintLastLog no'
+
+- name: Restart ssh
+  service: name=ssh state=restarted
+
+- name: Set default boot target to multi-user
+  file: 
+    path: /etc/systemd/system/default.target 
+    src: /lib/systemd/system/multi-user.target 
+    state: link
+    
+# - name: Install the readme
+#   template:
+#     src: readme.txt
+#     dest: ~/readme.txt
+#   become: true
+#   become_user: baaahs

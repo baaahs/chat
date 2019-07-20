@@ -1,0 +1,6 @@
+---
+
+- hosts: chat_laptops
+  roles:
+    - setup
+  become: yes
