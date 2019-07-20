@@ -4,3 +4,4 @@
   roles:
     # - setup
     - chat-client
+  become: yes
