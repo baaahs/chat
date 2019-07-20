@@ -38,3 +38,4 @@ raspberry_pi_foundation_adapter_oui: b8:27:eb
 human_readable_server_name: BAAAHS Lights Server
 baaahs_vimrc_destination: "/home/{{ baaahs_username }}/.vimrc"
 
+baaahs_chat_src_dir: "/home/{{ baaahs_username }}/src"

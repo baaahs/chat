@@ -1,0 +1,14 @@
+---
+
+- name: Install go so that we can build things locally
+  apt:
+    pkg: 
+      - golang
+    state: latest
+
+- name: Clone the chat code
+  git:
+    repo: 'https://github.com/baaahs/chat.git'
+    dest: '{{ baaahs_src_dir }}/chat'
+    version: master
+    force: yes

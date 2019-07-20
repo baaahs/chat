@@ -64,11 +64,61 @@ At this point you should be able to ssh to the laptop via something like the fol
 
     ssh baaahs@sally.local        # Using whatever name you gave your machine of course
 
-Assuming that works, and that you are a sane ssh user with a private key already setup locally, then it's time to make this new laptop trust you. Again - use your proper IP address.
+Assuming that works, and that you are a sane ssh user with a private key already setup locally, then it's time to make this new laptop trust you. Again - use whatever name you're working with. Something along the lines of
+
+    ssh-copy-id baaahs@sally.local
+
+might work, or you might need the more old school approach
 
     ssh baaahs@sally.local mkdir -m 700 .ssh
     scp ~/.ssh/id_rsa.pub baaahs@sally.local:.ssh/authorized_keys
 
 *Now!* Finally. We are ready to deploy the Ansible!
+
+Local Virtualization
+====================
+
+Lets say you want to work on this configuration project upstairs instead of in front of a laptop. Well you would want to get the [xubuntu ISO file](https://xubuntu.org/download) and run it in [VirtualBox](https://www.virtualbox.org). That  way you could hack at this config and not have to have the laptop in front of you.
+
+Follow the same setup instructions from above and you can get an image up and running. You'll almost certainly want to install the kernel extensions that make the desktop part all happy and good though, and that requires work because xubuntu isn't setup to build kernel extensions out of the box. So we get to do some of this stuff inside the VM as root.
+
+    #apt-get install gcc make perl
+
+And then run the `autorun.sh` script to install the tools into the instance and reboot it.
+
+I also had to change the default networking from NAT to Bridged in order to get the machine on the same network as the host so that ansible can talk to it. Changing this in virtualbox required bouncing the interface in xubuntu.
+
+
+Ansible
+=======
+
+Right now - we're working on it. Or I'm working on it. Someone might be. Basically, this is the real meat and potatoes of where changes are happening.
+
+The basic idea is that you will be running ansible on a controller machine which will then remotely connect to the laptop and will twiddle things around via ssh. So you need ansible installed locally on the controller machine. For Mac Os this is probably
+
+    brew install ansible
+
+Read the output, deal with any local system issues related to python environments and the like. It might just work for you and if it doesn't you probably caused the issue that is breaking it yourself and are qualified to resolve it. I'm just a text file. I can't fix all the things.
+
+The magic "just go do it already" command is
+
+    ansible-playbook -K chat_laptop_playbook.yml 
+
+The `-K` says ask for the sudo password - which would be the password you used during installation.
+
+At this point, there should hopefully be error messages about things that don't work. As mentioned, this doesn't currently result in a complete chat laptop, but eventually it will.
+
+Notes on Inventory
+==================
+
+The way ansible knows which systems to talk to is the result of both the `ansible.cfg` file in this directory which references `inventory.dist`. This is an INI formatted file that lists groups of hosts. It's probably easiest to manipulate this file to target which host you want but if you're a fancy `ansible` user you can probably do other cool things as well.
+
+Things Left To Do
+=================
+
+These should all be done via ansible
+
+* Set a good display mode/size for the tty
+
 
 
