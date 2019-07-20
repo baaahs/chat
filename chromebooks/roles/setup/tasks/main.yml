@@ -69,10 +69,31 @@
     path: /etc/systemd/system/default.target 
     src: /lib/systemd/system/multi-user.target 
     state: link
-    
-# - name: Install the readme
-#   template:
-#     src: readme.txt
-#     dest: ~/readme.txt
-#   become: true
-#   become_user: baaahs
+
+- name: Install boot options
+  copy:
+    src: 99-baaahs.cfg
+    dest: /etc/default/grub.d
+  notify: update grub
+
+- name: Don't honor the power off key
+  replace:
+    path: /etc/systemd/logind.conf
+    regexp: "^#HandlePowerKey.+$"
+    replace: "HandlePowerKey=ignore"
+
+- name: Change the console font face
+  replace:
+    path: /etc/default/console-setup
+    after: FONTFACE=
+    regexp: '".+"'
+    before: \n
+    replace: '"TerminusBold"'
+
+- name: Change the console font size
+  replace:
+    path: /etc/default/console-setup
+    after: FONTSIZE=
+    regexp: '".+"'
+    before: \n
+    replace: '"16x32"'
