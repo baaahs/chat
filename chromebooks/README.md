@@ -1,18 +1,10 @@
-We have purchased 3 chromebooks for the initial chat implementation. One is meant as
-a backup, which is good because one of the 3 that arrived is apparently enterprise 
-locked still and we might not be able to defeat this before playa in 2019.
+We have purchased 3 chromebooks for the initial chat implementation. One is meant as a backup, which is good because one of the 3 that arrived is apparently enterprise locked still and we might not be able to defeat this before playa in 2019.
 
-This directory exists to collect notes about their specific configuration. The goal
-is to do as much of this remotely via ansible so that it is easily repeatable.
+This directory exists to collect notes about their specific configuration. The goal is to do as much of this remotely via ansible so that it is easily repeatable.
 
-That being said, we need to start with a base. In our case that is getting
-[GalliumOS](https://galliumos.org) up and running. So far for the two machines
-that have successfully been able to go into developer mode, I've managed to
-get Gallium running on at least one of them that I'm using for the test bed.
+That being said, we need to start with a base. In our case that is getting [GalliumOS](https://galliumos.org) up and running. So far for the two machines that have successfully been able to go into developer mode, I've managed to get Gallium running on at least one of them that I'm using for the test bed.
 
-At the moment it still is using the bootloader which puts up a nasty "developer"
-oriented screen, where you have to press CTRL-L to do a legacy boot. I need
-to investigate this further so that it completely bypasses all the ChromeOS crap.
+At the moment it still is using the bootloader which puts up a nasty "developer" oriented screen, where you have to press CTRL-L to do a legacy boot. I need to investigate this further so that it completely bypasses all the ChromeOS crap.
 
 The [Official Dell Dissassembly Guide for 3120 Chromebooks](https://downloads.dell.com/Manuals/all-products/esuprt_laptop/esuprt_chromebook/chromebook-11-3120_User%27s%20Guide3_en-us.pdf).
 
@@ -54,7 +46,9 @@ On the "Who are you?" screen, here's the recommendation:
 
 After this the installation should proceed normally. At the end, reboot. You shouldn't pull out the installation USB drive until it tells you to at the end of the shutdown of the live system.
 
-Upon reboot you should be able to enter your username and password and be back at the Gallium desktop. You will need to configure your wifi again as before. It's also probably that there will be software updates. The top item in the launcher menu (lower left) is GalliumOS Update. Enter your password and let it do it's thing. You should probably then reboot just because. The power/reboot management is accessed from the upper right corner of the launcher menu. A green power icon that's all lazy and laying on it's side. Use that sucker to restart.
+Upon reboot you should be able to enter your username and password and be back at the Gallium desktop. You will need to configure your wifi again as before. 
+
+While you'll almost certainly be prompted about software updated, don't bother because the ansible scripts should handle those.
 
 *Ok!* We're almost done. Because we want to do the rest of the things remotely we need sshd running so open a shell and:
 
@@ -66,7 +60,7 @@ At this point you should be able to ssh to the laptop via something like the fol
 
 Assuming that works, and that you are a sane ssh user with a private key already setup locally, then it's time to make this new laptop trust you. Again - use whatever name you're working with. Something along the lines of
 
-    ssh-copy-id baaahs@sally.local
+    ssh-copy-id -i ~/.ssh/id_rsa.pub baaahs@sally.local
 
 might work, or you might need the more old school approach
 
@@ -100,7 +94,7 @@ The basic idea is that you will be running ansible on a controller machine which
 
 Read the output, deal with any local system issues related to python environments and the like. It might just work for you and if it doesn't you probably caused the issue that is breaking it yourself and are qualified to resolve it. I'm just a text file. I can't fix all the things.
 
-The magic "just go do it already" command is
+The magic "just go do it already" command is as follows, but see below for the "only do one machine" version.
 
     ansible-playbook -K chat_laptop_playbook.yml 
 
@@ -110,9 +104,9 @@ At this point, there should hopefully be error messages about things that don't 
 
 Hey I finally made progress on sanity. There are now playbooks that target a single machine, the name of which can be passed as a variable. So during development quick turns you might want to do something more like this:
 
-    ansible-playbook -K -e "the_one=debby" update_one.yml
+    ansible-playbook -K -e "the_one=sally" update_one.yml
     
-
+There is also a `setup_one.yml` file that can be used instead of the `chat_laptop_playbook.yml` file from above when you are setting up one machine at a time (which is probably a good idea to be doing).
 
 Notes on Inventory
 ==================

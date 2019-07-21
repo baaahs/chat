@@ -1,0 +1,4 @@
+#id: test
+url: "tcp://10.0.1.10:1883"
+log: true
+

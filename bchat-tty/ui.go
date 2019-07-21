@@ -65,6 +65,7 @@ func NewUI(cfg *config.AclNode, net *Network) *UI {
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
 		SetTextAlign(tview.AlignRight)
+	ui.statusText.SetBackgroundColor(tcell.ColorRebeccaPurple)
 
 	ui.inputField = tview.NewInputField().
 		SetLabel(">").
@@ -96,7 +97,7 @@ func NewUI(cfg *config.AclNode, net *Network) *UI {
 	}
 
 	ui.mainFlex.
-		AddItem(ui.statusText, 1, 0, false).
+		AddItem(ui.statusText, 2, 0, false).
 		AddItem(ui.inputField, 1, 0, true)
 
 
@@ -135,9 +136,11 @@ func (ui *UI) Refresh() {
 		status = "Connected"
 	}
 
+	statusLine := fmt.Sprintf("id:%v name:%v mqtt:%v", ui.net.id, ui.net.name, status)
+
 	go func() {
 		ui.app.QueueUpdateDraw(func() {
-			ui.statusText.SetText(status)
+			ui.statusText.SetText(statusLine)
 		})
 	}()
 }
