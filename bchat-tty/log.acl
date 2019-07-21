@@ -1,0 +1,73 @@
+logging {
+
+    // If debug is set to true, then after all configuration has been done
+    // a series of messages, one at each log level, will be written so
+    // you can check to make sure logging is working the way you want it to.
+    debug: true
+
+    // The global logging level. Only message at this level and above will
+    // be output. This can also be controlled on a per-module basis.
+    level: info
+
+    // The global format that is used by all backends unless another format
+    // is specified in the definition of the individual backend. The value
+    // shown here is the default value if one is not given. See go-logging
+    // for more info about available commands.
+    // format: "%{time:15:04:05.000} %{shortfunc:10.10s} %{level:4.4s} %{module:8.8s} ▶ %{message}"
+
+
+    // Any number of backends can be specified, they just need unique
+    // names. This is done instead of using an array so they can be more
+    // easily addressed in a cascade of config files if necessary
+    backends {
+
+        // Just hold things in memory
+        memory {
+            type: memory
+            size: 1000	// Number of lines to hold onto
+            forTesting: false // See the go-logging docs
+            format: "%{time:15:04:05} %{message}"
+        }
+
+/*
+        // Same as memory, but using a channel to store the data
+        channel_memory {
+            type: channelMemory
+            size: 1000
+            format: "%{time:15:04:05} %{message}"
+        }
+
+        // Write to a file, optionally adding color in addition to
+        // whatever is specified in log format
+        log_file {
+            type: file
+            filename: "out.log"
+            color: false
+            format: "%{time:15:04:05} %{message}"
+        }
+
+        // A special case of the file backend directed to stdout
+        console {
+            type: stdout
+            color: true
+            format: "%{time:15:04:05} %{message}"
+        }
+
+        // Like stdout, but for stderr
+        standard_err {
+            type: stderr
+            color: true
+            format: "%{time:15:04:05} %{message}"
+        }
+
+        // Logs to syslog
+        standard_err {
+            type: syslog
+            prefix: "archer" // A prefix for all message. See builtin log package
+            facility: user	 // Syslog facility.
+                             // See the SyslogFacilities map in this file
+            format: "%{time:15:04:05} %{message}"
+        }
+*/
+    }
+}

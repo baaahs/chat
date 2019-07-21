@@ -39,6 +39,7 @@
       - lsof
       - tree
       - jq
+      - aptitude
     state: latest
 
 - name: Update message of the day
