@@ -7,7 +7,7 @@
     state: latest
 
 - name: Fetch and build the client
-  command: go get github.com/baaahs/chat/bchat-tty
+  command: go get -f -u github.com/baaahs/chat/bchat-tty
 
 - name: Copy the tty template file
   copy:
@@ -26,3 +26,14 @@
     path: /etc/systemd/system/getty@tty1.service
     regexp: '^ExecStart=(.+)$'
     replace: 'ExecStart=-/sbin/agetty -i -n -l /root/go/bin/bchat-tty tty1 linux'
+
+- name: Give it a config file
+  template:
+    src: bchat.acl.j2
+    dest: /etc/bchat.acl
+
+- name: Restart the tty1 service
+  systemd:
+    daemon_reload: yes
+    state: restarted
+    name: getty@tty1.service

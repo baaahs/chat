@@ -1,0 +1,6 @@
+---
+
+- hosts: '{{ the_one }}.local'
+  roles:
+    - chat-client
+  become: yes

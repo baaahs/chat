@@ -1,0 +1,17 @@
+chat_laptops:
+  hosts:
+    debby.local:
+      bchat_name: debby
+    sally.local:
+      bchat_name: Sheep
+    becky.local:
+      bchat_name: Station
+    jennifer.local:
+      bchat_name: jennifer
+
+  vars:
+    ansible_user: baaahs
+
+    # This 10.0.1.10 address is my dev machine at home. We need to figure
+    # this out for everyone though.
+    mqtt_broker_hostname: 10.0.1.10

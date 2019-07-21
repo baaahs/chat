@@ -1,0 +1,20 @@
+// The url specifies which mqtt broker to connect to. There will be two, one
+// on the sheep and one at camp. It would be super cute if these could be
+// configured to use .local names but I'm not sure if that's going to work
+// in all scenarios or not
+
+url: "tcp://{{ mqtt_broker_hostname }}:1883"
+
+
+// The name is effectively the user in the chat. It is used in the topic for
+// messages as well. If not set it would default to the id, but we kind of
+// want the id to probably be the machhine id, which won't be a good name
+
+name: {{ bchat_name }}
+
+
+// The id is how the MQTT servers tell the clients apart. Each client really needs
+// to have a unique one, so generally we want this to NOT be set so that it will
+// be read from the system. If you need to override it though you can.
+
+// id: baaahs_lappy

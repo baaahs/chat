@@ -108,6 +108,12 @@ The `-K` says ask for the sudo password - which would be the password you used d
 
 At this point, there should hopefully be error messages about things that don't work. As mentioned, this doesn't currently result in a complete chat laptop, but eventually it will.
 
+Hey I finally made progress on sanity. There are now playbooks that target a single machine, the name of which can be passed as a variable. So during development quick turns you might want to do something more like this:
+
+    ansible-playbook -K -e "the_one=debby" update_one.yml
+    
+
+
 Notes on Inventory
 ==================
 
