@@ -68,7 +68,7 @@ func NewUI(cfg *archercl.AclNode, net *Network) *UI {
 	ui.statusText.SetBackgroundColor(tcell.ColorRebeccaPurple)
 
 	ui.inputField = tview.NewInputField().
-		SetLabel(">").
+		SetLabel(fmt.Sprintf("%s> ", ui.net.name)).
 		SetFieldBackgroundColor(tcell.ColorBlack)
 
 	ui.inputField.SetDoneFunc(func(key tcell.Key) {
