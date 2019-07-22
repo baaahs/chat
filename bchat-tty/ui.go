@@ -161,9 +161,9 @@ func (ui *UI) RecvMessage(msg *Message) {
 	// For now just let the TextView buffer handle it
 	color := "cyan"
 	if msg.me {
-		color = "red"
+		color = "yellow"
 	}
-	fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: [blue]%v\n", color, msg.From, msg.Msg)
+	fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: %v\n", color, msg.From, msg.Msg)
 
 	// TODO: Clean up that buffer sometimes!
 
