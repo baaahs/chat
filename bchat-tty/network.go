@@ -75,12 +75,8 @@ func (net *Network) start() {
 	var opts = mqtt.NewClientOptions().AddBroker(net.url).SetClientID(net.id)
 	opts.SetCleanSession(false)
 
-	opts.SetConnectionLostHandler(func(client mqtt.Client, e error) {
-		net.disconnect(e)
-	})
-	opts.SetOnConnectHandler(func(client mqtt.Client) {
-		net.connect()
-	})
+	opts.SetConnectionLostHandler(net.evtDisconnect)
+	opts.SetOnConnectHandler(net.evtConnect)
 
 	net.c = mqtt.NewClient(opts)
 
@@ -103,14 +99,14 @@ func (net *Network)SendText(txt string) {
 	net.c.Publish(net.publishTopic, 2, false, data)
 }
 
-func (net *Network)disconnect(e error) {
+func (net *Network) evtDisconnect(client mqtt.Client, e error) {
 	log.Infof("disconnect event %v", e)
 	if net.RefreshUI != nil {
 		net.RefreshUI()
 	}
 }
 
-func (net *Network)connect() {
+func (net *Network) evtConnect(client mqtt.Client) {
 	log.Info("connect event")
 
 	// Every time we connect we want to subscribe. THe assumption being made is that
@@ -118,14 +114,17 @@ func (net *Network)connect() {
 	// if the server is totally new (like it bounced without persistence) this is
 	// new information to it potentially
 	log.Infof("Starting subscription call id=%v", net.id)
-	t := net.c.Subscribe("bchat/rooms/main/+/messages", 2, func(client mqtt.Client, message mqtt.Message) {
+
+	log.Infof("net.c.isConnected=%v", net.c.IsConnected())
+
+	tkn := net.c.Subscribe("bchat/rooms/main/+/messages", 2, func(client mqtt.Client, message mqtt.Message) {
 		net.handleChat(message)
 	})
-	// This should be fast, but don't wait forever
-	t.WaitTimeout(5 * time.Second)
-	if t.Error() != nil {
-		log.Errorf("Error subscribing: %v", t.Error())
-		net.c.Disconnect(250)
+	// This should be fast, but don'tkn wait forever
+	tkn.WaitTimeout(5 * time.Second)
+	if tkn.Error() != nil {
+		log.Errorf("Error subscribing: %v", tkn.Error())
+		//net.c.Disconnect(250)
 	} else {
 		log.Info("Subscribed")
 	}
@@ -162,6 +161,7 @@ func (net *Network) tryToConnect() {
 				time.Sleep(5 * time.Second)
 			} else {
 				// Hey we are connected now!
+				return
 			}
 		}
 	}
