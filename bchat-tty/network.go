@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/denisbrodbeck/machineid"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/eyethereal/go-config"
+	"github.com/eyethereal/go-archercl"
 	"os"
 	"regexp"
 	"time"
@@ -40,15 +40,14 @@ type Network struct {
 	publishTopic string
 }
 
-func NewNetwork(cfg *config.AclNode) *Network {
+func NewNetwork(cfg *archercl.AclNode) *Network {
 	url := cfg.DefChildAsString("tcp://localhost:18830", "url")
 	id := cfg.ChildAsString("id")
 	if len(id) == 0 {
 		var err error
-		id, err = machineid.ID()
-		//id, err = machineid.ProtectedID("bchat")
-		log.Errorf("Failed to read machine id: %v", err)
+		id, err = machineid.ProtectedID("bchat")
 		if err != nil {
+			log.Errorf("Failed to read machine id. Will use hostname: %v", err)
 			id, _ = os.Hostname()
 		}
 	}

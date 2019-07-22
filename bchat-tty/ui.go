@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/eyethereal/go-config"
+	"github.com/eyethereal/go-archercl"
 	"github.com/gdamore/tcell"
 	"github.com/op/go-logging"
 	"github.com/rivo/tview"
@@ -48,7 +48,7 @@ type UI struct {
 	app *tview.Application
 }
 
-func NewUI(cfg *config.AclNode, net *Network) *UI {
+func NewUI(cfg *archercl.AclNode, net *Network) *UI {
 	ui := &UI{
 		net: net,
 	}
@@ -175,7 +175,7 @@ func (ui *UI) RecvMessage(msg *Message) {
 func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error {
 
 	if ui.logText != nil {
-		fmt.Fprintf(ui.logText, "%v\n", rec.Message())
+		fmt.Fprintf(ui.logText, "%v\n", rec.Formatted(0))
 	}
 
 	//msg := Message{
