@@ -6,8 +6,8 @@ chat_laptops:
       bchat_name: Sheep
     becky.local:
       bchat_name: Station
-    jennifer.local:
-      bchat_name: jennifer
+    jenny.local:
+      bchat_name: Jenny
 
   vars:
     ansible_user: baaahs
