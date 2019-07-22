@@ -1,0 +1,29 @@
+---
+
+# Warning - this is not idempotent! It will nuke the old linux
+# machine id on the system (both the dbus and the systemd one)
+# and will create a new one randomly. Running it more than once
+# will create a new id each time.
+
+
+- hosts: '{{ the_one }}.local'
+  become: yes
+  tasks:
+    - name: Remove existing ids
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/machine-id
+        - /var/lib/dbus/machine-id
+    - name: Create new one
+      command: dbus-uuidgen --ensure
+    - name: Copy dbus to etc
+      file:
+        path: /etc/machine-id
+        src: /var/lib/dbus/machine-id
+        state: link
+    - name: Reboot because this is a big change
+      reboot:
+
+

@@ -165,25 +165,12 @@ func (ui *UI) RecvMessage(msg *Message) {
 }
 
 
-
-func (ui *UI) addLocalMessage(msg string) {
-	fmt.Fprintf(ui.messageView, "\n[green]me [lightgray]:[blue]%v", msg)
-
-	ui.app.Draw()
-}
-
-func (ui *UI) GetLevel(string) logging.Level {
-	return logging.DEBUG
-}
-
-func (ui *UI) SetLevel(logging.Level, string) {
-
-}
-
-func (ui *UI) IsEnabledFor(logging.Level, string) bool {
-	return true
-}
-
+//
+//func (ui *UI) addLocalMessage(msg string) {
+//	fmt.Fprintf(ui.messageView, "\n[green]me [lightgray]:[blue]%v", msg)
+//
+//	ui.app.Draw()
+//}
 
 func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error {
 

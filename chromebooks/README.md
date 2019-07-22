@@ -1,14 +1,14 @@
+# The Chromebook Girls
+
 We have purchased 3 chromebooks for the initial chat implementation. One is meant as a backup, which is good because one of the 3 that arrived is apparently enterprise locked still and we might not be able to defeat this before playa in 2019.
 
 This directory exists to collect notes about their specific configuration. The goal is to do as much of this remotely via ansible so that it is easily repeatable.
 
 That being said, we need to start with a base. In our case that is getting [GalliumOS](https://galliumos.org) up and running. So far for the two machines that have successfully been able to go into developer mode, I've managed to get Gallium running on at least one of them that I'm using for the test bed.
 
-At the moment it still is using the bootloader which puts up a nasty "developer" oriented screen, where you have to press CTRL-L to do a legacy boot. I need to investigate this further so that it completely bypasses all the ChromeOS crap.
-
 The [Official Dell Dissassembly Guide for 3120 Chromebooks](https://downloads.dell.com/Manuals/all-products/esuprt_laptop/esuprt_chromebook/chromebook-11-3120_User%27s%20Guide3_en-us.pdf).
 
-After removing the write protect screw from the motherboard (and in our case leaving it out so that we don't have to deal with this in the future), the Mr Chromebox [Firmware Utility Script](https://mrchromebox.tech/#fwscript) can be used to install the *Full ROM Firmware*. The reason for using this one is that it gets rid of all the Chrome stuff at the beginning. Does this mean we can't go back to ChromeOS? Probably. Do we care? Probably not.
+After removing the write protect screw from the motherboard (and in our case leaving it out so that we don't have to deal with this in the future), the Mr Chromebox [Firmware Utility Script](https://mrchromebox.tech/#fwscript) can be used to install the *Full ROM Firmware*. The reason for using this one is that it gets rid of all the Chrome stuff at the beginning. Does this mean we can't go back to ChromeOS? Probably. Do we care? Probably not. Becky was a rough girl who's write protect screw was stripped out probably by the refurbishing people, so after grinding at it a little with a dremel it was decided that popping a nearby resistor off the board was a better option. Don't mess with Texas.
 
 Running this script requires a root shell and then executing the super safe, just download this from the internet and execute as root, I'm sure nothing could ever go wrong script like so:
 
@@ -67,7 +67,7 @@ might work, or you might need the more old school approach
     ssh baaahs@sally.local mkdir -m 700 .ssh
     scp ~/.ssh/id_rsa.pub baaahs@sally.local:.ssh/authorized_keys
 
-*Now!* Finally. We are ready to deploy the Ansible!
+**Now!** Finally. We are ready to deploy the Ansible!
 
 Local Virtualization
 ====================
@@ -107,6 +107,9 @@ Hey I finally made progress on sanity. There are now playbooks that target a sin
     ansible-playbook -K -e "the_one=sally" update_one.yml
     
 There is also a `setup_one.yml` file that can be used instead of the `chat_laptop_playbook.yml` file from above when you are setting up one machine at a time (which is probably a good idea to be doing).
+
+THEN I discovered a new thing - the install process doesn't actually create a unique machine id the way it really really should. Come on guys. Anyway, there is a one off playbook that is also a "only target one host" playbook you can run to fix this. It's the `new_machine_id_one.yml` and it wants a `the_one` variable defined as above. You really should only run this once per machine and shouldn't need to ever again. The only reason this came up is that I'm using the machine id in the `bchat-tty` program so that a machine which goes offline can be re-identified. But to be real big boy linux computers this id really should be getting set (much like windows hell, but whatever. It's not 100% stupid)
+
 
 Notes on Inventory
 ==================
