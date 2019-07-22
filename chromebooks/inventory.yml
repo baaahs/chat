@@ -1,7 +1,11 @@
-chat_laptops:
+all:
+  # All the hosts we know about
   hosts:
+    # Debby is a virtual machine name
     debby.local:
       bchat_name: debby
+
+    # These other three are the Dell Chromebook 11 3120 laptops
     sally.local:
       bchat_name: Sheep
     becky.local:
@@ -9,9 +13,18 @@ chat_laptops:
     jenny.local:
       bchat_name: Jenny
 
+  # Variables for all machines
   vars:
     ansible_user: baaahs
 
     # This 10.0.1.10 address is my dev machine at home. We need to figure
     # this out for everyone though.
     mqtt_broker_hostname: 10.0.1.10
+
+  children:
+    # A group so that the laptops can be addressed all at once
+    laptops:
+      hosts:
+        sally.local:
+        becky.local:
+        jenny.local:

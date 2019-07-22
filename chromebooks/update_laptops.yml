@@ -1,0 +1,6 @@
+---
+
+- hosts: laptops
+  roles:
+    - chat-client
+  become: yes
