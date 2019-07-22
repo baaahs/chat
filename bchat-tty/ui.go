@@ -97,7 +97,7 @@ func NewUI(cfg *archercl.AclNode, net *Network) *UI {
 	}
 
 	ui.mainFlex.
-		AddItem(ui.statusText, 2, 0, false).
+		AddItem(ui.statusText, 1, 0, false).
 		AddItem(ui.inputField, 1, 0, true)
 
 
@@ -136,7 +136,11 @@ func (ui *UI) Refresh() {
 		status = "Connected"
 	}
 
-	statusLine := fmt.Sprintf("id:%v\nname:%v mqtt:%v", ui.net.id, ui.net.name, status)
+	shortId := ui.net.id
+	if len(shortId) > 9 {
+		shortId = fmt.Sprintf("...%s", shortId[len(shortId)-6:])
+	}
+	statusLine := fmt.Sprintf("id:%v mqtt:%v", shortId, ui.net.name, status)
 
 	go func() {
 		ui.app.QueueUpdateDraw(func() {
