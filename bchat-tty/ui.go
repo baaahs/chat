@@ -1,11 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/eyethereal/go-archercl"
 	"github.com/gdamore/tcell"
 	"github.com/op/go-logging"
 	"github.com/rivo/tview"
+	"strconv"
+	"strings"
 )
 
 
@@ -73,19 +76,18 @@ func NewUI(cfg *archercl.AclNode, net *Network) *UI {
 
 	ui.inputField.SetDoneFunc(func(key tcell.Key) {
 		txt := ui.inputField.GetText()
-		if key == tcell.KeyEnter {
-			ui.net.SendText(txt)
-			// No local echo
-			//ui.addLocalMessage(txt)
-		}
 
-		// Tabs also come in here so don't clear those!
-		if key == tcell.KeyTAB {
-			return
-		}
+		switch key {
+		case tcell.KeyEnter:
+			ui.handleLine(txt)
+			ui.inputField.SetText("")
 
-		// Everything else we do clear though
-		ui.inputField.SetText("")
+		case tcell.KeyESC:
+			ui.inputField.SetText("")
+
+		default:
+			log.Debugf("Unhandled done key %v", key)
+		}
 	})
 
 	ui.mainFlex = tview.NewFlex().
@@ -140,7 +142,7 @@ func (ui *UI) Refresh() {
 	if len(shortId) > 9 {
 		shortId = fmt.Sprintf("...%s", shortId[len(shortId)-6:])
 	}
-	statusLine := fmt.Sprintf("id:%v mqtt:%v", shortId, ui.net.name, status)
+	statusLine := fmt.Sprintf("id:%v mqtt:%v", shortId, status)
 
 	go func() {
 		ui.app.QueueUpdateDraw(func() {
@@ -168,6 +170,142 @@ func (ui *UI) RecvMessage(msg *Message) {
 	ui.app.Draw()
 }
 
+
+func (ui *UI) handleLine(line string) {
+	line = strings.TrimSpace(line)
+	if len(line) == 0 {
+		return
+	}
+
+	if line[0] == '/' {
+		words := strings.Split(line, " ")
+		switch words[0] {
+		case "/lorem":
+			ui.cmdLorem(words)
+
+		case "/chars":
+			ui.cmdChars(words)
+
+		case "/help":
+			ui.cmdHelp(words)
+
+		default:
+			ui.cmdUnknown(words)
+		}
+	} else {
+		// Computers are fast. This is dumb but it gets us easy
+		// access to the go syntax for double quoted strings like \u2800 etc.
+		// This does mean that users can send \r \n or whatever. I think
+		// we have things setup where it will all get interpreted as character
+		// data though so the terminal should be ox
+		q := fmt.Sprintf("\"%s\"", line)
+		uq, e := strconv.Unquote(q)
+		if e != nil {
+			log.Error(e)
+			return
+		}
+		ui.net.SendText(uq)
+	}
+}
+
+const PIRATE = `Transom gangway Jolly Roger poop deck Cat o'nine tails sutler run a shot across the bow snow starboard mutiny. Interloper cable fathom smartly black jack transom draft chase weigh anchor splice the main brace. Scuppers topgallant rope's end landlubber or just lubber to go on account scuttle crack Jennys tea cup Privateer broadside booty.
+Hands lee cog draft warp measured fer yer chains list cutlass jib quarterdeck. Plunder spyglass black spot scourge of the seven seas hardtack yawl Privateer marooned jury mast long boat. Swing the lead aye carouser heave down lugger transom rope's end strike colors rum provost.
+Spike salmagundi scuttle Arr jack heave to lateen sail yo-ho-ho Letter of Marque code of conduct. Heave down scuppers lee dance the hempen jig hardtack scallywag hornswaggle killick hands walk the plank. Gally pirate yard gunwalls execution dock belay bilged on her anchor gangway Sink me Jack Ketch.`
+
+const SAMUEL = `Now that there is the Tec-9, a crappy spray gun from South Miami. This gun is advertised as the most popular gun in American crime. Do you believe that shit? It actually says that in the little book that comes with it: the most popular gun in American crime. Like they're actually proud of that shit.
+My money's in that office, right? If she start giving me some bullshit about it ain't there, and we got to go someplace else and get it, I'm gonna shoot you in the head then and there. Then I'm gonna shoot that bitch in the kneecaps, find out where my goddamn money is. She gonna tell me too. Hey, look at me when I'm talking to you, motherfucker. You listen: we go in there, and that nigga Winston or anybody else is in there, you the first motherfucker to get shot. You understand?
+Your bones don't break, mine do. That's clear. Your cells react to bacteria and viruses differently than mine. You don't get sick, I do. That's also clear. But for some reason, you and I react the exact same way to water. We swallow it too fast, we choke. We get some in our lungs, we drown. However unreal it may seem, we are connected, you and I. We're on the same curve, just on opposite ends.`
+
+const LIPSOM = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam id fringilla nisi. Fusce lacinia elit vel eros molestie consequat. Donec sollicitudin gravida quam, vel faucibus nibh molestie id. Suspendisse vel arcu eros. Duis non aliquet sapien. Nam et mi facilisis, aliquam risus vitae, dignissim arcu. Cras eu tempus ante. Nulla fermentum dui eu purus eleifend, ac aliquet erat lobortis.
+Phasellus at feugiat justo. Vestibulum odio arcu, eleifend et lacinia id, condimentum eu tortor. Etiam nec risus nec ligula congue interdum. Aliquam iaculis egestas dignissim. Fusce eu mi vitae orci venenatis porttitor. Integer at fermentum nisl. Pellentesque id ligula eget quam consequat fringilla et a odio. Maecenas vitae dolor mattis, sollicitudin mauris vel, dictum turpis. Vestibulum eget nisi et sapien placerat bibendum sit amet tristique arcu. Vivamus porta velit laoreet dolor facilisis congue. Nam non libero mollis, mollis justo sit amet, varius ex.
+Morbi eleifend nunc enim, vel molestie velit tempus aliquet. Maecenas viverra erat scelerisque, rutrum nibh et, sollicitudin tellus. In ac urna ut tortor accumsan blandit. Proin elit eros, tempor in purus nec, pharetra sagittis magna. Nam dictum ullamcorper iaculis. Pellentesque sit amet suscipit massa, at suscipit velit. Quisque consequat nibh ante, ut consequat sapien pulvinar ac. Etiam fringilla congue odio, et finibus lectus posuere quis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Etiam semper, enim a auctor maximus, mauris ligula fermentum risus, mattis vulputate ligula metus at massa.
+`
+
+func (ui *UI) cmdLorem(words []string) {
+
+	lorem := flag.NewFlagSet("/lorem", flag.ContinueOnError)
+	kind := lorem.String("k", "lipsom", "Kind of text (lipsom, pirate, samuel)")
+	chars := lorem.Int("c", 0, "number of chars to print")
+	lorem.SetOutput(ui.messageView)
+
+	err := lorem.Parse(words[1:])
+	if err != nil {
+		ui.app.Draw()
+		return
+	}
+
+	var src string
+	switch *kind {
+	case "lipsom":
+		src = LIPSOM
+
+	case "pirate":
+		src = PIRATE
+
+	case "samuel":
+		src = SAMUEL
+
+	default:
+		ui.addRawText("invalid kind")
+		return
+	}
+
+	if *chars == 0 || *chars < 0{
+		// The whole thing
+		ui.net.SendText(src)
+		return
+	}
+
+	if *chars <= len(src) {
+		ui.net.SendText(src[:*chars])
+		return
+	}
+
+	ui.addRawText(fmt.Sprintf("only have %v chars of that", len(src)))
+}
+
+func (ui *UI) cmdChars(words []string) {
+	cmd := flag.NewFlagSet("/chars", flag.ContinueOnError)
+	cmd.SetOutput(ui.messageView)
+	start := cmd.Int("start", 32, "start code")
+	end := cmd.Int("end", 127, "end code")
+
+	err := cmd.Parse(words[1:])
+	if err != nil {
+		ui.addRawText("Error")
+		ui.app.Draw()
+		return
+	}
+
+	s := *start
+	e := *end
+	log.Debugf("s=%v e=%v", s, e)
+
+	amt := e - s
+	out := make([]rune, amt)
+
+	for i := 0; i < amt; i++ {
+		out[i] = rune(i + s)
+	}
+
+	ui.addRawText(string(out))
+}
+
+func (ui *UI) cmdHelp(words []string) {
+	ui.addRawText(fmt.Sprintf("There is no help"))
+}
+
+func (ui *UI) cmdUnknown(words []string) {
+	ui.addRawText(fmt.Sprintf("Unknown command %v", words[0]))
+}
+
+
+
+func (ui *UI) addRawText(txt string) {
+	fmt.Fprintf(ui.messageView, "\n[red]* [magenta]%v", txt)
+
+	ui.app.Draw()
+}
 
 //
 //func (ui *UI) addLocalMessage(msg string) {
