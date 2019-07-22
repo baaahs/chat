@@ -84,7 +84,7 @@ func (net *Network) start() {
 
 	net.c = mqtt.NewClient(opts)
 
-	go net.connectAndSubscribe()
+	go net.tryToConnect()
 }
 
 func (net *Network)SendText(txt string) {
@@ -112,12 +112,31 @@ func (net *Network)disconnect(e error) {
 
 func (net *Network)connect() {
 	log.Info("connect event")
+
+	// Every time we connect we want to subscribe. THe assumption being made is that
+	// it's okay to re-subscribe even if the server already knew about this. However
+	// if the server is totally new (like it bounced without persistence) this is
+	// new information to it potentially
+	log.Infof("Starting subscription call id=%v", net.id)
+	t := net.c.Subscribe("bchat/rooms/main/+/messages", 2, func(client mqtt.Client, message mqtt.Message) {
+		net.handleChat(message)
+	})
+	// This should be fast, but don't wait forever
+	t.WaitTimeout(5 * time.Second)
+	if t.Error() != nil {
+		log.Errorf("Error subscribing: %v", t.Error())
+		net.c.Disconnect(250)
+	} else {
+		log.Info("Subscribed")
+	}
+
+
 	if net.RefreshUI != nil {
 		net.RefreshUI()
 	}
 }
 
-func (net *Network) connectAndSubscribe() {
+func (net *Network) tryToConnect() {
 
 	var numErrors = 0
 
@@ -143,20 +162,6 @@ func (net *Network) connectAndSubscribe() {
 				time.Sleep(5 * time.Second)
 			} else {
 				// Hey we are connected now!
-				log.Infof("Starting subscription call id=%v", net.id)
-				t := net.c.Subscribe("bchat/rooms/main/+/messages", 2, func(client mqtt.Client, message mqtt.Message) {
-					net.handleChat(message)
-				})
-				// This should be fast, but don't wait forever
-				t.WaitTimeout(5 * time.Second)
-				if t.Error() != nil {
-					log.Errorf("Error subscribing: %v", t.Error())
-					net.c.Disconnect(250)
-				} else {
-					// Presumably auto connect will take it from here so we can exit the outer loop
-					log.Info("Subscribed")
-					return
-				}
 			}
 		}
 	}
