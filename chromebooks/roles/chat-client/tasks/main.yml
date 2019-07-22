@@ -25,7 +25,14 @@
   replace:
     path: /etc/systemd/system/getty@tty1.service
     regexp: '^ExecStart=(.+)$'
-    replace: 'ExecStart=-/sbin/agetty -i -n -l /root/go/bin/bchat-tty tty1 linux'
+    # The options here are
+    # -i don't show /etc/issue
+    # -n don't prompt for a login name
+    # -l use the specified command rather than /bin/login
+    # -o pass these arguments to the command. We're using these to know that it
+    #         is the tty instance that is running by setting an additional ACL string
+    #         that gets parsed into bchat's config
+    replace: 'ExecStart=-/sbin/agetty -i -n -l /root/go/bin/bchat-tty -o "tty=tty1" tty1 linux'
 
 - name: Give it a config file
   template:

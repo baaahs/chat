@@ -29,7 +29,6 @@ func main() {
 		dumpConfig: true
 		dumpColor: false
 		`,
-		DumpConfig: true,
 
 		// Set this so we can see early log messages, but not desirable
 		// in most deployments
@@ -50,32 +49,8 @@ func main() {
 		log.Debug(cfg.String())
 		panic("What? no ui backend...")
 	}
-	//backends := make([]logging.Backend, 1)
-	//
-	//// Attach the UI. It might not always display but it can cache I guess
-	//backends[0] = ui
-	//
-	//// Always log to syslog
-	//sl, e := logging.NewSyslogBackendPriority("bchat", syslog.LOG_DEBUG)
-	//if e != nil {
-	//	log.Warning("Unable to create syslog backend")
-	//} else {
-	//	backends = append(backends, sl)
-	//}
-	//
-	////fName := fmt.Sprintf("bchat-%v.log", os.Getpid())
-	////file, err := os.OpenFile(fName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, os.FileMode(0666))
-	////if err != nil {
-	////	log.Panicf("Unable to open file '%s' : %s", fName, err)
-	////	return
-	////}
-	////
-	////fBE := logging.NewLogBackend(file, "", 0)
-	//
-	////logging.SetBackend(ui, fBE)
-	//logging.SetBackend(backends...)
 
-	log.Error("Starting bchat-tty")
+	log.Infof("Starting bchat-tty on %v", cfg.ChildAsString("tty"))
 
 	net.start()
 	ui.Run()
