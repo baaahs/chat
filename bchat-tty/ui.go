@@ -136,7 +136,7 @@ func (ui *UI) Refresh() {
 		status = "Connected"
 	}
 
-	statusLine := fmt.Sprintf("id:%v name:%v mqtt:%v", ui.net.id, ui.net.name, status)
+	statusLine := fmt.Sprintf("id:%v\nname:%v mqtt:%v", ui.net.id, ui.net.name, status)
 
 	go func() {
 		ui.app.QueueUpdateDraw(func() {

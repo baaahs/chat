@@ -45,7 +45,8 @@ func NewNetwork(cfg *config.AclNode) *Network {
 	id := cfg.ChildAsString("id")
 	if len(id) == 0 {
 		var err error
-		id, err = machineid.ProtectedID("bchat")
+		id, err = machineid.ID()
+		//id, err = machineid.ProtectedID("bchat")
 		log.Errorf("Failed to read machine id: %v", err)
 		if err != nil {
 			id, _ = os.Hostname()
