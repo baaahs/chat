@@ -163,7 +163,7 @@ func (ui *UI) RecvMessage(msg *Message) {
 	if msg.me {
 		color = "red"
 	}
-	fmt.Fprintf(ui.messageView, "\n[%v]%v[lightgray]: [blue]%v", color, msg.From, msg.Msg)
+	fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: [blue]%v\n", color, msg.From, msg.Msg)
 
 	// TODO: Clean up that buffer sometimes!
 
@@ -188,6 +188,9 @@ func (ui *UI) handleLine(line string) {
 
 		case "/help":
 			ui.cmdHelp(words)
+
+		case "/nick":
+			ui.cmdNick(words)
 
 		default:
 			ui.cmdUnknown(words)
@@ -246,7 +249,7 @@ func (ui *UI) cmdLorem(words []string) {
 		src = SAMUEL
 
 	default:
-		ui.addRawText("invalid kind")
+		ui.sysText("invalid kind")
 		return
 	}
 
@@ -261,7 +264,7 @@ func (ui *UI) cmdLorem(words []string) {
 		return
 	}
 
-	ui.addRawText(fmt.Sprintf("only have %v chars of that", len(src)))
+	ui.sysText(fmt.Sprintf("only have %v chars of that", len(src)))
 }
 
 func (ui *UI) cmdChars(words []string) {
@@ -272,7 +275,7 @@ func (ui *UI) cmdChars(words []string) {
 
 	err := cmd.Parse(words[1:])
 	if err != nil {
-		ui.addRawText("Error")
+		ui.sysText("Error")
 		ui.app.Draw()
 		return
 	}
@@ -288,21 +291,21 @@ func (ui *UI) cmdChars(words []string) {
 		out[i] = rune(i + s)
 	}
 
-	ui.addRawText(string(out))
+	ui.sysText(string(out))
 }
 
 func (ui *UI) cmdHelp(words []string) {
-	ui.addRawText(fmt.Sprintf("There is no help"))
+	ui.sysText(fmt.Sprintf("There is no help"))
 }
 
 func (ui *UI) cmdUnknown(words []string) {
-	ui.addRawText(fmt.Sprintf("Unknown command %v", words[0]))
+	ui.sysText(fmt.Sprintf("Unknown command %v", words[0]))
 }
 
 
 
-func (ui *UI) addRawText(txt string) {
-	fmt.Fprintf(ui.messageView, "\n[red]* [magenta]%v", txt)
+func (ui *UI) sysText(txt string) {
+	fmt.Fprintf(ui.messageView, "[red]* [magenta]%v\n", txt)
 
 	ui.app.Draw()
 }
@@ -331,4 +334,11 @@ func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error
 	//return c.Send(msg)
 
 	return nil
+}
+
+func (ui *UI) cmdNick(words []string) {
+	if len(words) > 1 {
+		ui.net.name = words[1]
+		ui.inputField.SetLabel(fmt.Sprintf("%s> ", ui.net.name))
+	}
 }
