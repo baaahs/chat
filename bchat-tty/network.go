@@ -15,18 +15,17 @@ type UIRefresher func()
 type MessageRecver func(*Message)
 
 type Message struct {
-	Msg string  `json:"msg,omitempty"`
+	Msg  string `json:"msg,omitempty"`
 	From string `json:"from,omitempty"`
 	Sent int64  `json:"sent,omitempty"`
-	me bool
+	me   bool
 }
-
 
 type Network struct {
 	c mqtt.Client
 
-	url string
-	id string
+	url  string
+	id   string
 	name string
 
 	err error
@@ -41,8 +40,9 @@ type Network struct {
 }
 
 func NewNetwork(cfg *archercl.AclNode) *Network {
-	url := cfg.DefChildAsString("tcp://localhost:18830", "url")
+	url := cfg.DefChildAsString("tcp://localhost:1883", "url")
 	id := cfg.ChildAsString("id")
+
 	if len(id) == 0 {
 		var err error
 		id, err = machineid.ProtectedID("bchat")
@@ -52,17 +52,21 @@ func NewNetwork(cfg *archercl.AclNode) *Network {
 		}
 	}
 
-	name := cfg.DefChildAsString(id, "name")
+	defName := id
+	if len(defName) > 6 {
+		defName = defName[len(defName)-6:]
+	}
+	name := cfg.DefChildAsString(defName, "name")
 
 	// Make a Regex to say we only want letters and numbers
 	reg, _ := regexp.Compile("[^a-zA-Z0-9]+")
 	name = reg.ReplaceAllString(name, "-")
 
-	net := &Network {
-		url: url,
-		id: id,
-		name: name,
-		TimeToDie: make(chan bool),
+	net := &Network{
+		url:          url,
+		id:           id,
+		name:         name,
+		TimeToDie:    make(chan bool),
 		publishTopic: fmt.Sprintf("bchat/rooms/main/%v/messages", name),
 	}
 
@@ -83,10 +87,10 @@ func (net *Network) start() {
 	go net.tryToConnect()
 }
 
-func (net *Network)SendText(txt string) {
+func (net *Network) SendText(txt string) {
 	m := Message{
 		From: net.name,
-		Msg: txt,
+		Msg:  txt,
 		Sent: time.Now().Unix(),
 	}
 
@@ -129,7 +133,6 @@ func (net *Network) evtConnect(client mqtt.Client) {
 		log.Info("Subscribed")
 	}
 
-
 	if net.RefreshUI != nil {
 		net.RefreshUI()
 	}
@@ -141,7 +144,7 @@ func (net *Network) tryToConnect() {
 
 	for {
 		select {
-		case <- net.TimeToDie:
+		case <-net.TimeToDie:
 			log.Info("Giving up on starting a network connection")
 			return
 

@@ -40,6 +40,11 @@ func main() {
 		panic(err)
 	}
 
+	if cfg.ChildAsBool("configDebug") {
+		log.Error("Stopping because configDebug was set")
+		return
+	}
+
 	net := NewNetwork(cfg)
 	ui := NewUI(cfg, net)
 
