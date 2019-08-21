@@ -46,7 +46,11 @@ type UI struct {
 
 	logText *tview.TextView
 
-	statusText *tview.TextView
+    batteryLevel *tview.TextView
+	wifiStatus *tview.TextView
+    statusText *tview.TextView
+	statusFlex *tview.Flex
+
 	mainFlex *tview.Flex
 
 	app *tview.Application
@@ -58,24 +62,41 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 		ss: ss,
 	}
 
+	// The big message area at top
 	ui.messageView = tview.NewTextView().
 		SetDynamicColors(true)
 
+	// Maybe have a log area in there
 	showLog := cfg.ChildAsBool("log")
 	if showLog {
 		ui.logText = tview.NewTextView().
 			SetDynamicColors(true)
 	}
 
+	/////// Status things
+	ui.batteryLevel = tview.NewTextView().
+	    SetScrollable(false)
+
+	ui.wifiStatus = tview.NewTextView().
+	    SetScrollable(false)
+
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
 		SetTextAlign(tview.AlignRight)
 	ui.statusText.SetBackgroundColor(tcell.ColorRebeccaPurple)
 
+    ui.statusFlex = tview.NewFlex().
+        SetDirection(tview.FlexColumn).
+        AddItem(ui.batteryLevel, 4,0,false).
+        AddItem(ui.wifiStatus, 0, 1, false).
+        AddItem(ui.statusText, 0, 4, false)
+
+    // And then a simple input field for the bottom of the screen
 	ui.inputField = tview.NewInputField().
 		SetLabel(fmt.Sprintf("%s> ", ui.net.name)).
 		SetFieldBackgroundColor(tcell.ColorBlack)
 
+	// What to do when the user hits enter or leaves the field
 	ui.inputField.SetDoneFunc(func(key tcell.Key) {
 		txt := ui.inputField.GetText()
 
@@ -124,9 +145,21 @@ func (ui *UI) Run() {
 	// Keep it fresh from the start...
 	ui.Refresh()
 
+    // Start some go routines to update parts of the UI
+    go ui.batteryUpdater()
+
 	if err := ui.app.Run(); err != nil {
 		panic(err)
 	}
+}
+
+func (ui *UI) batteryUpdater() {
+    for {
+        percent :=  <- ui.ss.PowerPercent
+
+        s := fmt.Sprintf("%f%%", percent)
+        ui.batteryLevel.SetText(s)
+    }
 }
 
 func (ui *UI) Refresh() {

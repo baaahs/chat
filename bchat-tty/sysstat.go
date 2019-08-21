@@ -8,10 +8,13 @@ import (
 
 type SysStat struct {
     conn *dbus.Conn
+
+    PowerPercent chan float64
 }
 
 func NewSysStat(cfg *archercl.AclNode) *SysStat {
     ss := &SysStat{
+        PowerPercent: make(chan float64, 2),
     }
     return ss
 }
@@ -28,6 +31,7 @@ func (ss *SysStat) Run() {
 
     go ss.CheckBattery()
 }
+
 
 //type PowerInfo struct {
 //    NativePath string
@@ -64,6 +68,7 @@ func (ss *SysStat) CheckBattery() {
             if val, ok := info["Percentage"]; ok {
                 if p, isFloat := val.Value().(float64); isFloat {
                     log.Warningf("Power Percentage is %v", p)
+                    ss.PowerPercent <- p
                 } else {
                     log.Errorf("Expected a float for Percentage from DisplayDevice property Percentage")
                 }
