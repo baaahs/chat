@@ -76,9 +76,13 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	/////// Status things
 	ui.batteryLevel = tview.NewTextView().
 	    SetScrollable(false)
+	ui.batteryLevel.
+	    SetBackgroundColor(tcell.ColorBlue)
+
 
 	ui.wifiStatus = tview.NewTextView().
 	    SetScrollable(false)
+	ui.wifiStatus.SetBackgroundColor(tcell.ColorGreen)
 
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
@@ -122,7 +126,7 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	}
 
 	ui.mainFlex.
-		AddItem(ui.statusText, 1, 0, false).
+		AddItem(ui.statusFlex, 1, 0, false).
 		AddItem(ui.inputField, 1, 0, true)
 
 
@@ -157,8 +161,14 @@ func (ui *UI) batteryUpdater() {
     for {
         percent :=  <- ui.ss.PowerPercent
 
-        s := fmt.Sprintf("%f%%", percent)
-        ui.batteryLevel.SetText(s)
+        log.Infof("batteryUpdater got %v", percent)
+        s := fmt.Sprintf("%v%%", percent)
+        log.Infof("Will set text to %v", s)
+        go func() {
+            ui.app.QueueUpdateDraw(func() {
+                ui.batteryLevel.SetText(s)
+            })
+        }()
     }
 }
 
@@ -330,7 +340,7 @@ func (ui *UI) cmdChars(words []string) {
 }
 
 func (ui *UI) cmdHelp(words []string) {
-	ui.sysText(fmt.Sprintf("There is no help"))
+	ui.sysText(fmt.Sprintf("lorem chars help nick\nThat's all there is."))
 }
 
 func (ui *UI) cmdUnknown(words []string) {

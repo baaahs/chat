@@ -25,6 +25,7 @@ func (ss *SysStat) Run() {
 
     if err != nil {
         log.Errorf("Failed to connect to system bus: %v", err)
+        ss.PowerPercent <- 0.69
         return
     }
     log.Info("Got system dbus connection")
