@@ -29,26 +29,26 @@ func (ss *SysStat) Run() {
     go ss.CheckBattery()
 }
 
-type PowerInfo struct {
-    NativePath string
-    Vendor string
-    Model string
-    Serial string
-    UpdateTime uint64
-    Type uint32
-    PowerSupply bool
-    HasHistory bool
-    HasStatistics bool
-    Online bool
-    Energy float64
-    EnergyEmpty float64
-    EnergyFull float64
-    EnergyFullDesign float64
-    EnergyRate float64
-}
+//type PowerInfo struct {
+//    NativePath string
+//    Vendor string
+//    Model string
+//    Serial string
+//    UpdateTime uint64
+//    Type uint32
+//    PowerSupply bool
+//    HasHistory bool
+//    HasStatistics bool
+//    Online bool
+//    Energy float64
+//    EnergyEmpty float64
+//    EnergyFull float64
+//    EnergyFullDesign float64
+//    EnergyRate float64
+//}
 func (ss *SysStat) CheckBattery() {
     for {
-        info := &PowerInfo{}
+        info := make(map[string]dbus.Variant)
 
         err := ss.conn.
             Object("org.freedesktop.UPower",
