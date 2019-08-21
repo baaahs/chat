@@ -47,7 +47,6 @@ type UI struct {
 	logText *tview.TextView
 
     batteryLevel *tview.TextView
-	wifiStatus *tview.TextView
     statusText *tview.TextView
 	statusFlex *tview.Flex
 
@@ -79,11 +78,6 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui.batteryLevel.
 	    SetBackgroundColor(tcell.ColorBlue)
 
-
-	ui.wifiStatus = tview.NewTextView().
-	    SetScrollable(false)
-	ui.wifiStatus.SetBackgroundColor(tcell.ColorGreen)
-
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
 		SetTextAlign(tview.AlignRight)
@@ -92,7 +86,6 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
     ui.statusFlex = tview.NewFlex().
         SetDirection(tview.FlexColumn).
         AddItem(ui.batteryLevel, 4,0,false).
-        AddItem(ui.wifiStatus, 0, 1, false).
         AddItem(ui.statusText, 0, 4, false)
 
     // And then a simple input field for the bottom of the screen
