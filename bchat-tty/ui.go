@@ -40,6 +40,7 @@ import (
 
 type UI struct {
 	net *Network
+	ss *SysStat
 	messageView *tview.TextView
 	inputField *tview.InputField
 
@@ -51,9 +52,10 @@ type UI struct {
 	app *tview.Application
 }
 
-func NewUI(cfg *archercl.AclNode, net *Network) *UI {
+func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui := &UI{
 		net: net,
+		ss: ss,
 	}
 
 	ui.messageView = tview.NewTextView().
@@ -319,19 +321,43 @@ func (ui *UI) sysText(txt string) {
 
 func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error {
 
-	if ui.logText != nil {
-		fmt.Fprintf(ui.logText, "%v\n", rec.Formatted(0))
+    if ui.logText == nil {
+        return nil
+    }
+
+    /*
+    	CRITICAL Level = iota
+    	ERROR
+    	WARNING
+    	NOTICE
+    	INFO
+    	DEBUG
+     */
+    var prefix string
+    switch level {
+    case logging.DEBUG:
+        prefix = "[cyan]"
+
+    case logging.INFO:
+        prefix = ""
+
+    case logging.NOTICE:
+        prefix = "[green]"
+
+    case logging.WARNING:
+        prefix = "[yellow]"
+
+    case logging.ERROR:
+        prefix = "[red]"
+
+    case logging.CRITICAL:
+        prefix = "[magenta]"
+
+    default:
+        prefix = ""
 	}
 
-	//msg := Message{
-	//	"level":     level.String(),
-	//	"id":        rec.ID,
-	//	"timestamp": rec.Time.UTC().Format("2006-01-02T15:04:05.999999Z"),
-	//	"module":    rec.Module,
-	//	"msg":       rec.Formatted(calldepth + 1),
-	//}
-	//
-	//return c.Send(msg)
+    fmt.Fprintf(ui.logText, "%s%v\n", prefix, rec.Formatted(0))
 
 	return nil
 }

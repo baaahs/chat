@@ -46,7 +46,8 @@ func main() {
 	}
 
 	net := NewNetwork(cfg)
-	ui := NewUI(cfg, net)
+	ss := NewSysStat(cfg)
+	ui := NewUI(cfg, net, ss)
 
 	if be, ok := archercl.GetBackend("ui").(*archercl.DelayedBackend); ok {
 		be.SetRealBackend(ui)
@@ -58,5 +59,6 @@ func main() {
 	log.Infof("Starting bchat-tty on %v", cfg.ChildAsString("tty"))
 
 	net.start()
+	ss.Run()
 	ui.Run()
 }
