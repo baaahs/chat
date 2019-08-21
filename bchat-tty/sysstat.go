@@ -3,6 +3,7 @@ package main
 import (
     "github.com/eyethereal/go-archercl"
     "github.com/godbus/dbus"
+    "time"
 )
 
 type SysStat struct {
@@ -25,4 +26,42 @@ func (ss *SysStat) Run() {
     }
     log.Info("Got system dbus connection")
 
+    go ss.CheckBattery()
+}
+
+type PowerInfo struct {
+    NativePath string
+    Vendor string
+    Model string
+    Serial string
+    UpdateTime uint64
+    Type uint32
+    PowerSupply bool
+    HasHistory bool
+    HasStatistics bool
+    Online bool
+    Energy float64
+    EnergyEmpty float64
+    EnergyFull float64
+    EnergyFullDesign float64
+    EnergyRate float64
+}
+func (ss *SysStat) CheckBattery() {
+    for {
+        info := &PowerInfo{}
+
+        err := ss.conn.
+            Object("org.freedesktop.UPower",
+                "/org/freedesktop/UPower/devices/DisplayDevice").
+            Call("org.freedesktop.DBus.Properties.GetAll", 0).
+            Store(info)
+
+        if err != nil {
+            log.Errorf("Failed to get battery info: %v", err)
+        } else {
+            log.Noticef("DisplayDevice Info: %v", info)
+        }
+
+        time.Sleep(2 * time.Second)
+    }
 }
