@@ -60,6 +60,16 @@ func (ss *SysStat) CheckBattery() {
             log.Errorf("Failed to get battery info: %v", err)
         } else {
             log.Noticef("DisplayDevice Info: %v", info)
+
+            if val, ok := info["Percentage"]; ok {
+                if p, isFloat := val.Value().(float64); isFloat {
+                    log.Warningf("Power Percentage is %v", p)
+                } else {
+                    log.Errorf("Expected a float for Percentage from DisplayDevice property Percentage")
+                }
+            } else {
+                log.Errorf("No 'Percentage' value in the returned map")
+            }
         }
 
         time.Sleep(2 * time.Second)
