@@ -53,7 +53,7 @@ func (ss *SysStat) CheckBattery() {
         err := ss.conn.
             Object("org.freedesktop.UPower",
                 "/org/freedesktop/UPower/devices/DisplayDevice").
-            Call("org.freedesktop.DBus.Properties.GetAll", 0).
+            Call("org.freedesktop.DBus.Properties.GetAll", 0, "org.freedesktop.UPower.Device").
             Store(info)
 
         if err != nil {
