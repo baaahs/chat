@@ -5,6 +5,31 @@ This repo defines the chat server, protocol, and some (maybe all) of the clients
 
 This system uses some of the same network as Sparkle Motion but is being built separately from the lighting project and does not rely on it. There will almost certainly be connection between the two over time.
 
+# Quick Start
+
+Starting in the root of this repo using a Mac. You will need 3 terminal windows.
+
+First make sure you have mosquitto installed.
+
+    brew install mosquitto
+
+Now in the first window, start mosquitto
+
+     mosquitto -c mosquitto/local.conf
+
+In a second window (still in the root of the repo) start the first chat client using an id of "first"
+
+     bin/bchat-tty-mac id=first
+
+In a third window start a second chat client with a different id, and this time enable the display of logging output directly in the UI
+
+     bin/chat-tty-mac id=second log=true
+
+At this point both client should show "mqtt:Connected" on the right hand side of the status bar. Anything typed in one window should appear in the other chat client. Use `/help` to show the help message - such as it is. Exit the client with `^c`.
+
+# Further Reading
+
+In addition to the documentation below, which largely dates to 2019, be sure to check the [developer doc](./doc/development.md) and the [Ansible README](./chromebooks/README.md) 
 
 ## Theory of Operation
 

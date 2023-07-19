@@ -4,13 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/eyethereal/go-archercl"
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 	"github.com/op/go-logging"
 	"github.com/rivo/tview"
 	"strconv"
 	"strings"
 )
-
 
 /*
 
@@ -39,16 +38,16 @@ import (
 */
 
 type UI struct {
-	net *Network
-	ss *SysStat
+	net         *Network
+	ss          *SysStat
 	messageView *tview.TextView
-	inputField *tview.InputField
+	inputField  *tview.InputField
 
 	logText *tview.TextView
 
-    batteryLevel *tview.TextView
-    statusText *tview.TextView
-	statusFlex *tview.Flex
+	batteryLevel *tview.TextView
+	statusText   *tview.TextView
+	statusFlex   *tview.Flex
 
 	mainFlex *tview.Flex
 
@@ -58,7 +57,7 @@ type UI struct {
 func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui := &UI{
 		net: net,
-		ss: ss,
+		ss:  ss,
 	}
 
 	// The big message area at top
@@ -74,21 +73,21 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 
 	/////// Status things
 	ui.batteryLevel = tview.NewTextView().
-	    SetScrollable(false)
+		SetScrollable(false)
 	ui.batteryLevel.
-	    SetBackgroundColor(tcell.ColorBlue)
+		SetBackgroundColor(tcell.ColorBlue)
 
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
 		SetTextAlign(tview.AlignRight)
 	ui.statusText.SetBackgroundColor(tcell.ColorRebeccaPurple)
 
-    ui.statusFlex = tview.NewFlex().
-        SetDirection(tview.FlexColumn).
-        AddItem(ui.batteryLevel, 4,0,false).
-        AddItem(ui.statusText, 0, 4, false)
+	ui.statusFlex = tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(ui.batteryLevel, 4, 0, false).
+		AddItem(ui.statusText, 0, 4, false)
 
-    // And then a simple input field for the bottom of the screen
+	// And then a simple input field for the bottom of the screen
 	ui.inputField = tview.NewInputField().
 		SetLabel(fmt.Sprintf("%s> ", ui.net.name)).
 		SetFieldBackgroundColor(tcell.ColorBlack)
@@ -122,7 +121,6 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 		AddItem(ui.statusFlex, 1, 0, false).
 		AddItem(ui.inputField, 1, 0, true)
 
-
 	// Bind to the net refresh
 	net.RefreshUI = func() {
 		ui.Refresh()
@@ -142,8 +140,8 @@ func (ui *UI) Run() {
 	// Keep it fresh from the start...
 	ui.Refresh()
 
-    // Start some go routines to update parts of the UI
-    go ui.batteryUpdater()
+	// Start some go routines to update parts of the UI
+	go ui.batteryUpdater()
 
 	if err := ui.app.Run(); err != nil {
 		panic(err)
@@ -151,23 +149,22 @@ func (ui *UI) Run() {
 }
 
 func (ui *UI) batteryUpdater() {
-    for {
-        percent :=  <- ui.ss.PowerPercent
+	for {
+		percent := <-ui.ss.PowerPercent
 
-        log.Infof("batteryUpdater got %v", percent)
-        s := fmt.Sprintf("%v%%", percent)
-        log.Infof("Will set text to %v", s)
-        go func() {
-            ui.app.QueueUpdateDraw(func() {
-                ui.batteryLevel.SetText(s)
-            })
-        }()
-    }
+		log.Infof("batteryUpdater got %v", percent)
+		s := fmt.Sprintf("%v%%", percent)
+		log.Infof("Will set text to %v", s)
+		go func() {
+			ui.app.QueueUpdateDraw(func() {
+				ui.batteryLevel.SetText(s)
+			})
+		}()
+	}
 }
 
 func (ui *UI) Refresh() {
 	//log.Info("Refresh")
-
 
 	status := "Disconnected"
 	if ui.net.err != nil {
@@ -201,13 +198,20 @@ func (ui *UI) RecvMessage(msg *Message) {
 	if msg.me {
 		color = "yellow"
 	}
-	fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: %v\n", color, msg.From, msg.Msg)
+	_, err := fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: %v\n", color, msg.From, msg.Msg)
+	if err != nil {
+		log.Errorf("Fprintf Err: %v", err)
+	}
 
 	// TODO: Clean up that buffer sometimes!
 
+	// Because RecvMessage isn't on the Main routine we have to explicitly
+	// tell the UI that we want an update on the next chance. Note that per
+	// the UI library documentation it is NOT safe to call Draw() from the
+	// main routine, which we didn't know and had it sprinkled all over.
+	// Thus - deadlocks. Oops! :)
 	ui.app.Draw()
 }
-
 
 func (ui *UI) handleLine(line string) {
 	line = strings.TrimSpace(line)
@@ -271,7 +275,6 @@ func (ui *UI) cmdLorem(words []string) {
 
 	err := lorem.Parse(words[1:])
 	if err != nil {
-		ui.app.Draw()
 		return
 	}
 
@@ -291,7 +294,7 @@ func (ui *UI) cmdLorem(words []string) {
 		return
 	}
 
-	if *chars == 0 || *chars < 0{
+	if *chars == 0 || *chars < 0 {
 		// The whole thing
 		ui.net.SendText(src)
 		return
@@ -314,7 +317,6 @@ func (ui *UI) cmdChars(words []string) {
 	err := cmd.Parse(words[1:])
 	if err != nil {
 		ui.sysText("Error")
-		ui.app.Draw()
 		return
 	}
 
@@ -333,6 +335,7 @@ func (ui *UI) cmdChars(words []string) {
 }
 
 func (ui *UI) cmdHelp(words []string) {
+	_ = words
 	ui.sysText(fmt.Sprintf("lorem chars help nick\nThat's all there is."))
 }
 
@@ -340,60 +343,66 @@ func (ui *UI) cmdUnknown(words []string) {
 	ui.sysText(fmt.Sprintf("Unknown command %v", words[0]))
 }
 
-
-
 func (ui *UI) sysText(txt string) {
-	fmt.Fprintf(ui.messageView, "[red]* [magenta]%v\n", txt)
+	_, err := fmt.Fprintf(ui.messageView, "[red]* [magenta]%v\n", txt)
+	if err != nil {
+		log.Errorf("Failed to Fprintf sysText %v", err)
+	}
 
-	ui.app.Draw()
+	// The assumption is we are on the main routine and thus do not
+	// call ui.app.Draw() explicitly. In the future we might want
+	// to add a check for whether this is needed or not. It is not safe
+	// to call from a callback (i.e. when handling a /command)
 }
 
 //
 //func (ui *UI) addLocalMessage(msg string) {
 //	fmt.Fprintf(ui.messageView, "\n[green]me [lightgray]:[blue]%v", msg)
 //
+//  Not safe from a callback!
 //	ui.app.Draw()
 //}
 
 func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error {
 
-    if ui.logText == nil {
-        return nil
-    }
-
-    /*
-    	CRITICAL Level = iota
-    	ERROR
-    	WARNING
-    	NOTICE
-    	INFO
-    	DEBUG
-     */
-    var prefix string
-    switch level {
-    case logging.DEBUG:
-        prefix = "[cyan]"
-
-    case logging.INFO:
-        prefix = ""
-
-    case logging.NOTICE:
-        prefix = "[green]"
-
-    case logging.WARNING:
-        prefix = "[yellow]"
-
-    case logging.ERROR:
-        prefix = "[red]"
-
-    case logging.CRITICAL:
-        prefix = "[magenta]"
-
-    default:
-        prefix = ""
+	_ = calldepth
+	if ui.logText == nil {
+		return nil
 	}
 
-    fmt.Fprintf(ui.logText, "%s%v\n", prefix, rec.Formatted(0))
+	/*
+		CRITICAL Level = iota
+		ERROR
+		WARNING
+		NOTICE
+		INFO
+		DEBUG
+	*/
+	var prefix string
+	switch level {
+	case logging.DEBUG:
+		prefix = "[cyan]"
+
+	case logging.INFO:
+		prefix = ""
+
+	case logging.NOTICE:
+		prefix = "[green]"
+
+	case logging.WARNING:
+		prefix = "[yellow]"
+
+	case logging.ERROR:
+		prefix = "[red]"
+
+	case logging.CRITICAL:
+		prefix = "[magenta]"
+
+	default:
+		prefix = ""
+	}
+
+	_, _ = fmt.Fprintf(ui.logText, "%s%v\n", prefix, rec.Formatted(0))
 
 	return nil
 }
