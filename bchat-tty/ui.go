@@ -62,13 +62,15 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 
 	// The big message area at top
 	ui.messageView = tview.NewTextView().
-		SetDynamicColors(true)
+		SetDynamicColors(true).
+		SetScrollable(true)
 
 	// Maybe have a log area in there
 	showLog := cfg.ChildAsBool("log")
 	if showLog {
 		ui.logText = tview.NewTextView().
-			SetDynamicColors(true)
+			SetDynamicColors(true).
+			SetScrollable(true)
 	}
 
 	/////// Status things
@@ -120,6 +122,40 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui.mainFlex.
 		AddItem(ui.statusFlex, 1, 0, false).
 		AddItem(ui.inputField, 1, 0, true)
+
+	// For certain keys we want them to ALWAYS go to the messageView
+	ui.mainFlex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		key := event.Key()
+		//log.Infof("Got key %v", key)
+
+		switch key {
+		case tcell.KeyPgUp:
+			row, col := ui.messageView.GetScrollOffset()
+			_, _, _, h := ui.messageView.GetInnerRect()
+			row -= h
+			if row < 0 {
+				row = 0
+			}
+
+			//log.Infof("Scrolling up by %v to %v", h, row)
+			ui.messageView.ScrollTo(row, col)
+			event = nil
+
+		case tcell.KeyPgDn:
+			row, col := ui.messageView.GetScrollOffset()
+			_, _, _, h := ui.messageView.GetInnerRect()
+			row += h
+			//if row < 0 {
+			//	row = 0
+			//}
+
+			//log.Infof("Scrolling down by %v to %v", h, row)
+			ui.messageView.ScrollTo(row, col)
+			event = nil
+		}
+
+		return event
+	})
 
 	// Bind to the net refresh
 	net.RefreshUI = func() {
@@ -194,11 +230,11 @@ func (ui *UI) RecvMessage(msg *Message) {
 	// TODO: Implement some sort of disk cache to persist across restarts
 
 	// For now just let the TextView buffer handle it
-	color := "cyan"
+	color := "green"
 	if msg.me {
 		color = "yellow"
 	}
-	_, err := fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: %v\n", color, msg.From, msg.Msg)
+	_, err := fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: %v\n[-:-:-]", color, msg.From, msg.Msg)
 	if err != nil {
 		log.Errorf("Fprintf Err: %v", err)
 	}
@@ -237,13 +273,19 @@ func (ui *UI) handleLine(line string) {
 		default:
 			ui.cmdUnknown(words)
 		}
+
+		ui.messageView.ScrollToEnd()
 	} else {
 		// Computers are fast. This is dumb but it gets us easy
 		// access to the go syntax for double quoted strings like \u2800 etc.
 		// This does mean that users can send \r \n or whatever. I think
 		// we have things setup where it will all get interpreted as character
-		// data though so the terminal should be ox
-		q := fmt.Sprintf("\"%s\"", line)
+		// data though so the terminal should be ok
+
+		// If we don't do the first replacement of double quotes they won't
+		// make it through the unquoting
+		dql := strings.Replace(line, "\"", "\\\"", -1)
+		q := fmt.Sprintf("\"%s\"", dql)
 		uq, e := strconv.Unquote(q)
 		if e != nil {
 			log.Error(e)
@@ -272,6 +314,7 @@ func (ui *UI) cmdLorem(words []string) {
 	kind := lorem.String("k", "lipsom", "Kind of text (lipsom, pirate, samuel)")
 	chars := lorem.Int("c", 0, "number of chars to print")
 	lorem.SetOutput(ui.messageView)
+	repeat := lorem.Int("r", 1, "Number of times to repeat")
 
 	err := lorem.Parse(words[1:])
 	if err != nil {
@@ -294,18 +337,23 @@ func (ui *UI) cmdLorem(words []string) {
 		return
 	}
 
-	if *chars == 0 || *chars < 0 {
-		// The whole thing
-		ui.net.SendText(src)
-		return
+	if *repeat < 1 {
+		*repeat = 1
 	}
+	for i := 0; i < *repeat; i++ {
 
-	if *chars <= len(src) {
-		ui.net.SendText(src[:*chars])
-		return
+		if *chars == 0 || *chars < 0 {
+			// The whole thing
+			ui.net.SendText(src)
+			continue
+		}
+
+		if *chars <= len(src) {
+			ui.net.SendText(src[:*chars])
+		} else {
+			ui.sysText(fmt.Sprintf("only have %v chars of that", len(src)))
+		}
 	}
-
-	ui.sysText(fmt.Sprintf("only have %v chars of that", len(src)))
 }
 
 func (ui *UI) cmdChars(words []string) {
@@ -324,6 +372,8 @@ func (ui *UI) cmdChars(words []string) {
 	e := *end
 	log.Debugf("s=%v e=%v", s, e)
 
+	// TODO: Make this much sexier in some sort of table or perhaps a popover window thing?
+
 	amt := e - s
 	out := make([]rune, amt)
 
@@ -334,9 +384,65 @@ func (ui *UI) cmdChars(words []string) {
 	ui.sysText(string(out))
 }
 
+const DEFAULT_HELP = `
+Enter text and press return. If the text begins with a / it is interpreted as a command. Everything else is sent as a chat message. Your messages will be prepended by your current nickname in yellow. Messages from others will show their nickname in cyan.
+
+The core commands are: [red]help[magenta], [red]lorem[magenta], [red]chars[magenta], [red]nick[magenta]
+
+There may be other commands and features not documented in the help system. Additional help for each command is obtained by using the command [red]/help {name}[magenta] where {name} is the name of a command.
+
+Some commands take additional parameters specified using attributes demarked with leading - characters followed by an attribute value. See each command help page for specifics.
+`
+
+var HelpText = map[string]string{
+	"lorem": `Lorem Help`,
+
+	"chars": `Displays a list of characters between two numerical values which are specified using the -start and -end parameters.
+
+Example: /chars -start 45 -end 83
+
+Why? Because the messages support unicode and can contain escape codes as follows:
+
+  \x  followed by exactly 2 hex digits
+  \   followed by exactly 3 octal digits
+  \u  followed by exactly 4 hex digits
+  \U  followed by exactly 8 hex digits
+`,
+
+	"colors": `Colors are specified in messages using square brackets such as [red[]. They can be specified using names or a # followed by a 24 bit (6 digit) hex string such as [#8080ff[]. 
+
+Foreground, background, and flags can also be set. The full square bracket notation is [<foreground>:<background>:<flags>[]. Fields may be blank and trailing fields may be omitted. The character - in a field resets that to a default value.
+
+The flags are: l (blink), b (bold), i (italic), d (dim), r (reverse), u (underline), s (strike-through)
+
+To enter non-color bracketed text insert a left bracket immediately before the closing bracket as so [whatever[[]
+`,
+}
+
 func (ui *UI) cmdHelp(words []string) {
-	_ = words
-	ui.sysText(fmt.Sprintf("lorem chars help nick\nThat's all there is."))
+	if len(words) < 2 {
+		_, _ = fmt.Fprintf(ui.messageView, "[magenta]%v\n", DEFAULT_HELP)
+
+		//ui.sysText(fmt.Sprintf("lorem chars help nick\nThat's all there is."))
+	} else {
+		text := HelpText[words[1]]
+
+		if text == "" {
+			ui.sysText(fmt.Sprintf("No help for [red]%v\n", words[1]))
+		} else {
+			_, _ = fmt.Fprintf(ui.messageView, "Help for [red]%v[magenta]\n", words[1])
+			_, _ = fmt.Fprintf(ui.messageView, "\n[magenta]%v[-:-:-]", text)
+		}
+	}
+}
+
+//TODO: Add a cmdColorNames that shows all the color names and even how they look
+
+func (ui *UI) cmdNick(words []string) {
+	if len(words) > 1 {
+		ui.net.name = words[1]
+		ui.inputField.SetLabel(fmt.Sprintf("%s> ", ui.net.name))
+	}
 }
 
 func (ui *UI) cmdUnknown(words []string) {
@@ -344,7 +450,7 @@ func (ui *UI) cmdUnknown(words []string) {
 }
 
 func (ui *UI) sysText(txt string) {
-	_, err := fmt.Fprintf(ui.messageView, "[red]* [magenta]%v\n", txt)
+	_, err := fmt.Fprintf(ui.messageView, "[red]* [magenta]%v\n[-:-:-]", txt)
 	if err != nil {
 		log.Errorf("Failed to Fprintf sysText %v", err)
 	}
@@ -404,12 +510,7 @@ func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error
 
 	_, _ = fmt.Fprintf(ui.logText, "%s%v\n", prefix, rec.Formatted(0))
 
-	return nil
-}
+	ui.logText.ScrollToEnd()
 
-func (ui *UI) cmdNick(words []string) {
-	if len(words) > 1 {
-		ui.net.name = words[1]
-		ui.inputField.SetLabel(fmt.Sprintf("%s> ", ui.net.name))
-	}
+	return nil
 }
