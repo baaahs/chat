@@ -39,6 +39,10 @@ class BaaahsMap:
         self.icon_file = icon
         self.man_file = man
         self.root = tk.Tk()
+
+        self.root.attributes("-fullscreen", True)
+        self.root.title("Shee-PS")
+
         self.widgets()
         self.x_baaahs_pos = 0
         self.y_baaahs_pos = 0 
