@@ -14,8 +14,8 @@ man_long = Decimal('-119.203500')
 
 temple = (Decimal('40.791346'), Decimal('-119.200243'))
 
-test_1 = (Decimal('40.765757'), Decimal('-119.242022'))
-test_2 = (Decimal('40.806824'), Decimal('-119.168263'))
+test_1 = (Decimal('40.765757'), Decimal('-119.242022')) # test point at the upper left bound
+test_2 = (Decimal('40.806824'), Decimal('-119.168263')) # test point at the bottom right bound
 
 print("lat bound", lat_max_y, "long bound", long_max_x)
 class BaaahsMap:
