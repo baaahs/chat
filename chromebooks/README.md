@@ -114,7 +114,7 @@ THEN I discovered a new thing - the install process doesn't actually create a un
 Notes on Inventory
 ==================
 
-The way ansible knows which systems to talk to is the result of both the `ansible.cfg` file in this directory which references `inventory.dist`. This is an INI formatted file that lists groups of hosts. It's probably easiest to manipulate this file to target which host you want but if you're a fancy `ansible` user you can probably do other cool things as well.
+The way ansible knows which systems to talk to is the result of both the `ansible.cfg` file in this directory which references `inventory.yml`. 
 
 Things Left To Do
 =================

@@ -5,13 +5,21 @@ all:
     debby.local:
       bchat_name: debby
 
-    # These other three are the Dell Chromebook 11 3120 laptops
+    # These are the original Dell Chromebook 11 3120 laptops
     sally.local:
-      bchat_name: Sheep
+      bchat_name: OldSheep
     becky.local:
-      bchat_name: Station
+      bchat_name: OldStation
     jenny.local:
       bchat_name: Jenny
+
+    # Any now the two new ones for 2023
+    ken.local:
+      bchat_name: Sheep
+      mqtt_broker_hostname: sheep-msg.local
+    allen.local:
+      bchat_name: Camp
+      mqtt_broker_hostname: camp-msg.local
 
   # Variables for all machines
   vars:
@@ -19,11 +27,17 @@ all:
 
     # This 10.0.1.10 address is my dev machine at home. We need to figure
     # this out for everyone though.
-    mqtt_broker_hostname: 10.0.1.10
+    mqtt_broker_hostname: msg.local
 
   children:
     # A group so that the laptops can be addressed all at once
     laptops:
+      hosts:
+        ken.local:
+        allen.local:
+
+    # The old girls
+    oldgirls:
       hosts:
         sally.local:
         becky.local:
