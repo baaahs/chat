@@ -2,6 +2,14 @@ import tkinter as tk
 from tkinter import PhotoImage
 from decimal import Decimal
 import os
+import paho.mqtt.client as mqtt
+
+# MQTT stuff
+def on_connect(client, userdata, flags, rc):
+    print("Yay connected")
+
+client = mqtt.Client(client_id = "tcp://localhost:1883")
+client.on_connect = on_connect
 
 # Old coordinates for brc_map_better.pgm
 # lat_max_bound = Decimal('40.806824')
@@ -31,6 +39,9 @@ temple = ll_temple = (Decimal('40.791255'), Decimal('-119.197142'))
 test_1 = (Decimal('40.765757'), Decimal('-119.242022')) # test point at the upper left bound
 test_2 = (Decimal('40.806824'), Decimal('-119.168263')) # test point at the bottom right bound
 
+max_message_list_size = 20
+new_gps_event_name = "<<NEW-GPS-COORDS>>"
+
 print("lat bound", lat_max_y, "long bound", long_max_x)
 class BaaahsMap:
     
@@ -43,13 +54,15 @@ class BaaahsMap:
         self.root.attributes("-fullscreen", True)
         self.root.title("Shee-PS")
 
+        self.baaahs_pos = ll_temple
+
         self.widgets()
-        self.x_baaahs_pos = 0
-        self.y_baaahs_pos = 0 
 
+    def mainLoop(self):
         self.root.mainloop()
-
+        
     def widgets(self):
+        # Map Stuff
         self.map_img = tk.PhotoImage(file=self.map_file)
         self.bgMap_width = Decimal(self.map_img.width())
         self.bgMap_height = Decimal(self.map_img.height())
@@ -60,40 +73,65 @@ class BaaahsMap:
         
         self.canvas = tk.Canvas(self.root, width=self.map_img.width(), height=self.map_img.height())
         self.canvas.create_image(0, 0, anchor='nw', image=self.map_img)
-        ## self.canvas.create_image(50,50, anchor='nw', image=self.baaahs)
+
+        # The Man
         man_pos = self.normalize_coords(ll_man[0], ll_man[1], self.man_img)
-        man_x_pos = man_pos[0]
-        man_y_pos = man_pos[1]
-        # self.new_gps_coord(40.78652, -119.206567, self.baaahs)
-        #self.canvas.create_image(man_y_pos, man_x_pos, anchor='nw', image=self.man_img)
-        self.canvas.create_image(man_x_pos, man_y_pos, anchor='c', image=self.man_img)
-        
-        # test_1_pos = self.normalize_coords(test_1[0], test_1[1], self.baaahs)
-        # self.canvas.create_image(test_1_pos[0], test_1_pos[1], anchor='nw', image=self.baaahs)
+        self.canvas.create_image(man_pos[0], man_pos[1], anchor='c', image=self.man_img)
 
-        # test_2_pos = self.normalize_coords(test_2[0], test_2[1], self.baaahs)
-        # self.canvas.create_image(test_2_pos[0], test_2_pos[1], anchor='nw', image=self.baaahs)
-
+        # Temple why not
         temple_pos = self.normalize_coords(temple[0], temple[1], self.baaahs)
         self.canvas.create_image(temple_pos[0], temple_pos[1], anchor='c', image=self.baaahs)
+        
+        # Initial BAAAHS
+        self.baaahs_id = self.canvas.create_image(test_2[0], test_2[1], anchor='c', image=self.baaahs)
 
+        self.canvas.event_add(new_gps_event_name, "None")
+        self.canvas.bind(new_gps_event_name, self.new_baaahs_coords)
+
+
+        # Right Text List
+        text_box_width = self.map_img.width() / 6
+        text_box_height = self.map_img.height() / 2
+        self.text_box = tk.Listbox(self.root, bg='#000', font='arial', fg="#fff")
+        self.text_box.pack()
+
+        text_box_pos_x = text_box_width * 4
+        text_box_pos_y = text_box_height
+        textbox_id = self.canvas.create_window(text_box_pos_x, text_box_pos_y, anchor='se', window=self.text_box, width=text_box_width, height=text_box_height)
+        #self.canvas.focus()
+
+        self.text_box.insert(tk.END, "This is a message")
+        self.text_box.insert(tk.END, "This is another message")
+        self.text_box.insert(tk.END, "What would this do")
+        self.text_box.focus()
+
+        # Finally pack
         self.canvas.pack()
+
+    def set_new_baaahs_cords(self, lat, long):
+        self.baaahs_pos = (Decimal(lat), Decimal(long))
+        self.canvas.event_generate("<<NEW-GPS-COORDS>>")
+
+    def new_baaahs_coords(self):
+        self.baaahs_pos = self.normalize_coords(self.baaahs_pos[0], self.baaahs_pos[1], self.baaahs)
+        self.canvas.delete(self.baaahs_id)
+        self.baaahs_id = self.canvas.create_image(self.baaahs_pos[0], self.baaahs_pos[1], anchor='c', image=self.baaahs)
+        # self.canvas.pack()
     
-    def new_gps_coord(self, lat, long, img):
-        new_pos = self.normalize_coords(lat, long, img)
-        self.canvas.create_image(new_pos[0], new_pos[1], anchor='nw', image=self.baaahs)
-        self.canvas.pack()
+    def add_message_to_box(self, message):
+        self.text_box.insert(tk.END, message)
+        if self.text_box.size() > max_message_list_size:
+            self.text_box.delete(0)
+        
     
     def normalize_coords(self, lat, long, img):
         norm_lat = (lat - lat_min_bound)/lat_max_y
         norm_long = (long - long_min_bound)/long_max_x
         img_x = norm_long * self.bgMap_width
         img_y = norm_lat * self.bgMap_height
-        print("norm lat (y)", norm_lat, "norm long (x)", norm_long)
-        print("img_y=", img_y, "  img_x=",img_x)
+
         img_offset_x = Decimal(img.width()) / Decimal(2)
         img_offset_y = Decimal(img.height()) / Decimal(2)
-        print("offset x", img_offset_x, "offset y", img_offset_y)
 
         # Verbose, but consistent
         output_x = img_x - img_offset_x
@@ -107,10 +145,32 @@ class BaaahsMap:
         return (output_x, output_y)
 
 
+MESSAGES_TOPIC = "bchat/rooms/main/messages"
+GPS_TOPIC = "bchat/rooms/main/sheep_loc"
 
 dir = os.getcwd()
 #image = dir + "/bchat-map/resources/brc_map_better.pgm"
 image = dir + "/bchat-map/resources/map_1080p.png"
 icon = dir + "/bchat-map/resources/baaahs_icon.pgm"
 man = dir + "/bchat-map/resources/the_man.pgm"
-BaaahsMap(image, icon, man)
+
+baaahsMap = BaaahsMap(image, icon, man)
+
+def on_new_sheep_coords(client, userdata, message):
+    new_lat = message.payload[0]
+    new_long = message.payload[1]
+    baaahsMap.set_new_baaahs_cords(new_lat, new_long)
+
+def on_new_message(client, userdata, message):
+    baaahsMap.add_message_to_box(message.payload)
+
+# Subs to GPS
+client.subscribe(GPS_TOPIC, qos=0)
+client.message_callback_add(GPS_TOPIC, on_new_sheep_coords)
+
+# Subs to Messages
+client.subscribe(MESSAGES_TOPIC, qos=0)
+client.message_callback_add(MESSAGES_TOPIC, on_new_message)
+
+baaahsMap.mainLoop()
+
