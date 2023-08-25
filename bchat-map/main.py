@@ -45,14 +45,32 @@ temple = ll_temple = (Decimal('40.791255'), Decimal('-119.197142'))
 # 4:00 and C 
 ll_four_and_C = (Decimal("40.777589"), Decimal("-119.200443"))
 
-# Previous test points from older image
-test_1 = (Decimal('40.765757'), Decimal('-119.242022')) # test point at the upper left bound
-test_2 = (Decimal('40.806824'), Decimal('-119.168263')) # test point at the bottom right bound
-
-max_message_list_size = 20
+# Consts
+max_message_chars = 40
+max_message_list_size = 25
 new_gps_event_name = "<<NEW-GPS-COORDS>>"
-new_gps_message_format = "Last BAAAHS Location @ {when}: [{lat}, {long}]"
-print("lat bound", lat_max_y, "long bound", long_max_x)
+new_gps_message_format = "Last BAAAHS Location @ {when}"
+
+def split_message(message: str):
+    message_len = len(message)
+    if (message_len <= max_message_chars):
+        return [message]
+
+    split_msg = []
+    words = message.split(" ")
+    current_line = ""
+
+    for idx, w in enumerate(words):
+        current_line += w + " "
+        if (len(current_line) > max_message_chars):
+            split_msg.append(current_line.rstrip())
+            current_line = "\t"
+
+        if (idx == len(words)-1):
+            split_msg.append(current_line.rstrip())
+
+    return split_msg
+
 class BaaahsMap:
     
     def __init__(self, image, icon, man):
@@ -103,14 +121,12 @@ class BaaahsMap:
         self.text_box = tk.Listbox(self.root, bg='#000', font='arial', fg="#fff")
         self.text_box.pack()
 
-        text_box_pos_x = text_box_width * 4
+        text_box_pos_x = 0 # text_box_width
         text_box_pos_y = text_box_height
-        self.canvas.create_window(text_box_pos_x, text_box_pos_y, anchor='se', window=self.text_box, width=text_box_width, height=text_box_height)
+        self.canvas.create_window(text_box_pos_x, text_box_pos_y, anchor='sw', window=self.text_box, width=text_box_width, height=text_box_height)
         #self.canvas.focus()
 
-        self.text_box.insert(tk.END, "This is a message")
-        self.text_box.insert(tk.END, "This is another message")
-        self.text_box.insert(tk.END, "What would this do")
+        # Show text box over map
         self.text_box.focus()
 
         # Finally pack
@@ -129,9 +145,12 @@ class BaaahsMap:
     
     def add_message_to_box(self, message):
         print("new baahs message", message)
-        self.text_box.insert(tk.END, message)
-        if self.text_box.size() > max_message_list_size:
-            self.text_box.delete(0)
+        split_msg = split_message(message)
+        for msg in split_msg:
+            self.text_box.insert(tk.END, msg)
+            if self.text_box.size() > max_message_list_size:
+                self.text_box.delete(0)
+
         
     
     def normalize_coords(self, lat, long, img):
@@ -172,7 +191,7 @@ def on_new_sheep_coords(client, userdata, message):
     new_long = new_ll[1]
     baaahsMap.set_new_baaahs_cords(new_lat, new_long)
 
-message_format = "[{date}]:[{who}]: {text}"
+message_format = "[{date}]: [{who}]: {text}"
 def on_new_message(client, userdata, message):
     data = json.loads(message.payload.decode())
     date = datetime.datetime.fromtimestamp(int(data["sent"]))

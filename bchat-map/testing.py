@@ -40,8 +40,14 @@ message = {
     "from": "testing" 
 }
         
-        
 MESSAGES_TOPIC = "bchat/rooms/main/*/messages"
+client.publish(MESSAGES_TOPIC, json.dumps(message))
+
+message = {
+    "msg": "this is a large test message that is larger than the max characters per line message",
+    "sent": time.time(),
+    "from": "testing" 
+}
 client.publish(MESSAGES_TOPIC, json.dumps(message))
 
 print("Published")

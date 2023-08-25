@@ -70,6 +70,11 @@ client.connect(host=args.mqtt_host, port=args.mqtt_port)
 client.on_connect = on_connect
 client.loop_start()
 
+min_diff = Decimal("0.00005")
+lat_long_message = "{lat:.7f},{long:.7f}"
+ll_four_and_C = (Decimal("40.777589"), Decimal("-119.200443"))
+last_ll = ll_four_and_C
+
 try:
     while True:
         received_data = (str)(ser.readline())                   #read NMEA string received
@@ -79,8 +84,12 @@ try:
             NMEA_buff = (GPGGA_buffer.split(','))               #store comma separated data in buffer
             GPS_Info()                                          #get time, latitude, longitude
 
-            client.publish("bchat/rooms/main/sheep_loc", (Decimal(lat_in_degrees), Decimal(long_in_degrees))) # publish location
-            
+            new_ll = (Decimal(lat_in_degrees), Decimal(long_in_degrees))
+            if ((min_diff < abs(last_ll[0] - new_ll[0])) or min_diff < abs(last_ll[1] - new_ll[1])):
+                last_ll = new_ll
+                msg_str = lat_long_message.format(lat=last_ll[0], long=last_ll[1])
+                client.publish("bchat/rooms/main/sheep_loc", msg_str)   
+
             print("lat in degrees:", lat_in_degrees," long in degree: ", long_in_degrees, '\n')
         
        
