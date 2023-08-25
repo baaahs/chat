@@ -20,11 +20,15 @@ def GPS_Info():
     print("NMEA Time: ", nmea_time,'\n')
     print ("NMEA Latitude:", nmea_latitude,"NMEA Longitude:", nmea_longitude,'\n')
     
-    lat = float(nmea_latitude)                  #convert string into float for calculation
-    longi = float(nmea_longitude)               #convertr string into float for calculation
-    
-    lat_in_degrees = convert_to_degrees(lat, north_south)    #get latitude in degree decimal format
-    long_in_degrees = convert_to_degrees(longi, east_west) #get longitude in degree decimal format
+    try:
+        lat = float(nmea_latitude)                  #convert string into float for calculation
+        longi = float(nmea_longitude)               #convertr string into float for calculation
+        
+        lat_in_degrees = convert_to_degrees(lat, north_south)    #get latitude in degree decimal format
+        long_in_degrees = convert_to_degrees(longi, east_west) #get longitude in degree decimal format
+    except:
+        print("no data yet")
+        sleep(500)
     
 #convert raw NMEA string into degree decimal format   
 def convert_to_degrees(raw_value, hemis):
@@ -84,6 +88,9 @@ try:
             NMEA_buff = (GPGGA_buffer.split(','))               #store comma separated data in buffer
             GPS_Info()                                          #get time, latitude, longitude
 
+            if (lat_in_degrees == 0 or long_in_degrees == 0):
+                continue
+            
             new_ll = (Decimal(lat_in_degrees), Decimal(long_in_degrees))
             if ((min_diff < abs(last_ll[0] - new_ll[0])) or min_diff < abs(last_ll[1] - new_ll[1])):
                 last_ll = new_ll
