@@ -4,6 +4,7 @@ from decimal import Decimal
 import os
 import paho.mqtt.client as mqtt
 import datetime
+import json
 
 # Parse command line args for fun and profit (and to make development life easier)
 import argparse
@@ -173,9 +174,9 @@ def on_new_sheep_coords(client, userdata, message):
 
 message_format = "[{date}]:[{who}]: {text}"
 def on_new_message(client, userdata, message):
-    print(message.payload)
-    data = message.payload
-    baaahsMap.add_message_to_box(message_format.format(date=data.Sent, who=data.From, text=data.Msg))
+    data = json.loads(message.payload.decode())
+    date = datetime.datetime.fromtimestamp(int(data["sent"]))
+    baaahsMap.add_message_to_box(message_format.format(date=date, who=data["from"], text=data["msg"]))
 
 # Subs to GPS
 client.subscribe(GPS_TOPIC, qos=0)

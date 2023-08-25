@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 from decimal import Decimal
 import datetime
 import time
+import json
 
 def on_connect(client, userdata, flags, rc):
     print("Yay test connected")
@@ -33,14 +34,15 @@ client.connect(host=mqtt_host, port=mqtt_port)
 client.loop_start()
 
 print("Started loop")
-class Message:
-    def __init__(self):
-        self.Sent = datetime.datetime.now()
-        self.From = "testing"
-        self.Msg = "this is a test"
+message = {
+    "msg": "this is a test message",
+    "sent": time.time(),
+    "from": "testing" 
+}
         
-MESSAGES_TOPIC = "bchat/rooms/main/testing/messages"
-# client.publish(MESSAGES_TOPIC, Message())
+        
+MESSAGES_TOPIC = "bchat/rooms/main/*/messages"
+client.publish(MESSAGES_TOPIC, json.dumps(message))
 
 print("Published")
 

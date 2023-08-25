@@ -2,6 +2,7 @@ import serial
 from time import sleep
 import sys                  
 import paho.mqtt.client as mqtt
+from decimal import Decimal
 
 def GPS_Info():
     global NMEA_buff
@@ -78,7 +79,7 @@ try:
             NMEA_buff = (GPGGA_buffer.split(','))               #store comma separated data in buffer
             GPS_Info()                                          #get time, latitude, longitude
 
-            client.publish("bchat/rooms/main/sheep_loc", (lat_in_degrees, long_in_degrees)) # publish location
+            client.publish("bchat/rooms/main/sheep_loc", (Decimal(lat_in_degrees), Decimal(long_in_degrees))) # publish location
             
             print("lat in degrees:", lat_in_degrees," long in degree: ", long_in_degrees, '\n')
         
