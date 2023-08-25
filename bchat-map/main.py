@@ -5,15 +5,26 @@ import os
 import paho.mqtt.client as mqtt
 import datetime
 
+# Parse command line args for fun and profit (and to make development life easier)
+import argparse
+
+parser = argparse.ArgumentParser(description="BAAAHS Chat map display")
+parser.add_argument("--dev", action="store_true", help="Run in development mode (not fullscreen)")
+parser.add_argument("--mqtt_host", default="tompop.tomseago.com", type=str, help="MQTT host address")
+parser.add_argument("--mqtt_port", default=1883, type=int, help="MQTT port number")
+parser.add_argument("--mqtt_id", default="map_test", type=str, help="MQTT client ID")
+args = parser.parse_args()
+
+
 # MQTT stuff
 def on_connect(client, userdata, flags, rc):
     print("Yay connected")
 
-client = mqtt.Client(client_id = "map_test")
+client = mqtt.Client(client_id = args.mqtt_id)
 client.on_connect = on_connect
 # Blocking connect call
-print("Attempting to connect...")
-client.connect(host="tompop.tomseago.com", port=1883)
+print("Attempting to connect to {args.mqtt_host}:{args.mqtt_port} using id '{args.mqtt_id}'...")
+client.connect(host=args.mqtt_host, port=args.mqtt_port)
 
 
 # Coordinates for the map_1080p.png ifle
@@ -48,7 +59,9 @@ class BaaahsMap:
         self.man_file = man
         self.root = tk.Tk()
 
-        self.root.attributes("-fullscreen", True)
+        # Only do fullscreen if not in "dev" mode
+        if not args.dev:
+            self.root.attributes("-fullscreen", True)
         self.root.title("Shee-PS")
 
         self.baaahs_pos_ll = ll_four_and_C
@@ -137,6 +150,7 @@ class BaaahsMap:
         output_y = self.bgMap_height - output_y
 
         return (output_x, output_y)
+
 
 
 MESSAGES_TOPIC = "bchat/rooms/main/*/messages"
