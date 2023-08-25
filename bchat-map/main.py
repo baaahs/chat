@@ -120,7 +120,7 @@ class BaaahsMap:
         self.baaahs_pos_ll = (Decimal(lat), Decimal(long))
         self.canvas.event_generate(new_gps_event_name)
 
-    def new_baaahs_coords(self):
+    def new_baaahs_coords(self, event):
         self.baaahs_pos = self.normalize_coords(self.baaahs_pos_ll[0], self.baaahs_pos_ll[1], self.baaahs)
         self.canvas.delete(self.baaahs_id)
         self.baaahs_id = self.canvas.create_image(self.baaahs_pos[0], self.baaahs_pos[1], anchor='c', image=self.baaahs)
@@ -166,9 +166,9 @@ man = dir + "/bchat-map/resources/the_man.pgm"
 baaahsMap = BaaahsMap(image, icon, man)
 
 def on_new_sheep_coords(client, userdata, message):
-    print(message.payload)
-    new_lat = message.payload[0]
-    new_long = message.payload[1]
+    new_ll = message.payload.decode().split(",")
+    new_lat = new_ll[0]
+    new_long = new_ll[1]
     baaahsMap.set_new_baaahs_cords(new_lat, new_long)
 
 message_format = "[{date}]:[{who}]: {text}"

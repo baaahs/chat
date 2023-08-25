@@ -8,12 +8,12 @@ def on_connect(client, userdata, flags, rc):
 
     GPS_TOPIC = "bchat/rooms/main/sheep_loc"
     ll_temple = (Decimal('40.791255'), Decimal('-119.197142'))
-    lat_long_message = "{lat:3.7f},{long:3.7f}"
+    lat_long_message = "{lat:.7f},{long:.7f}"
 
     msg_str = lat_long_message.format(lat=ll_temple[0], long=ll_temple[1])
     print("Publishing ", msg_str)
     client.publish(GPS_TOPIC, msg_str)
-    print("That is queued");
+    print("That is queued")
 
 
 def on_publish(a,b,c):
