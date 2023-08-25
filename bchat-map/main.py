@@ -10,7 +10,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="BAAAHS Chat map display")
 parser.add_argument("--dev", action="store_true", help="Run in development mode (not fullscreen)")
-parser.add_argument("--mqtt_host", default="tompop.tomseago.com", type=str, help="MQTT host address")
+parser.add_argument("--mqtt_host", default="localhost", type=str, help="MQTT host address")
 parser.add_argument("--mqtt_port", default=1883, type=int, help="MQTT port number")
 parser.add_argument("--mqtt_id", default="map_test", type=str, help="MQTT client ID")
 args = parser.parse_args()
