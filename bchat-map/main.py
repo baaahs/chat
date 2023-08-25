@@ -9,9 +9,12 @@ import datetime
 def on_connect(client, userdata, flags, rc):
     print("Yay connected")
 
-client = mqtt.Client(client_id = "localhost:1883")
+client = mqtt.Client(client_id = "map_test")
 client.on_connect = on_connect
-client.connect(host="tompop.tomseago.com")
+# Blocking connect call
+print("Attempting to connect...")
+client.connect(host="tompop.tomseago.com", port=1883)
+
 
 # Coordinates for the map_1080p.png ifle
 lat_max_bound = lat_upper_left = Decimal('40.804337')
