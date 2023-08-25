@@ -3,7 +3,6 @@ from time import sleep
 import sys                  
 import paho.mqtt.client as mqtt
 
-# This 
 def GPS_Info():
     global NMEA_buff
     global lat_in_degrees
@@ -52,12 +51,23 @@ NMEA_buff = 0
 lat_in_degrees = 0
 long_in_degrees = 0
 
+# Parse command line args for fun and profit (and to make development life easier)
+import argparse
+
+parser = argparse.ArgumentParser(description="BAAAHS Chat map display")
+parser.add_argument("--mqtt_host", default="localhost", type=str, help="MQTT host address")
+parser.add_argument("--mqtt_port", default=1883, type=int, help="MQTT port number")
+parser.add_argument("--mqtt_id", default="gps_test", type=str, help="MQTT client ID")
+args = parser.parse_args()
+
 # MQTT stuff
 def on_connect(client, userdata, flags, rc):
-    print("Yay connected")
+    print("Yay gps connected")
 
-client = mqtt.Client(client_id = "tcp://localhost:1883")
+client = mqtt.Client(client_id = args.mqtt_id)
+client.connect(host=args.mqtt_host, port=args.mqtt_port)
 client.on_connect = on_connect
+client.loop_start()
 
 try:
     while True:
@@ -68,7 +78,7 @@ try:
             NMEA_buff = (GPGGA_buffer.split(','))               #store comma separated data in buffer
             GPS_Info()                                          #get time, latitude, longitude
 
-            client.publish("bchat/rooms/main/sheep_loc", [lat_in_degrees, long_in_degrees]) # publish location
+            client.publish("bchat/rooms/main/sheep_loc", (lat_in_degrees, long_in_degrees)) # publish location
             
             print("lat in degrees:", lat_in_degrees," long in degree: ", long_in_degrees, '\n')
         

@@ -18,14 +18,15 @@ args = parser.parse_args()
 
 # MQTT stuff
 def on_connect(client, userdata, flags, rc):
-    print("Yay connected")
+    print("Yay map connected")
 
 client = mqtt.Client(client_id = args.mqtt_id)
 client.on_connect = on_connect
-# Blocking connect call
-print("Attempting to connect to {args.mqtt_host}:{args.mqtt_port} using id '{args.mqtt_id}'...")
-client.connect(host=args.mqtt_host, port=args.mqtt_port)
 
+# Blocking connect call
+print("Attempting to connect to {mqtt_host}:{mqtt_port} using id '{mqtt_id}'...".format(mqtt_host=args.mqtt_host, mqtt_port=args.mqtt_port, mqtt_id=args.mqtt_id))
+client.connect(host=args.mqtt_host, port=args.mqtt_port)
+client.loop_start()
 
 # Coordinates for the map_1080p.png ifle
 lat_max_bound = lat_upper_left = Decimal('40.804337')
@@ -115,6 +116,7 @@ class BaaahsMap:
         self.canvas.pack()
 
     def set_new_baaahs_cords(self, lat, long):
+        print("new baahs coords", lat, long)
         self.baaahs_pos_ll = (Decimal(lat), Decimal(long))
         self.canvas.event_generate(new_gps_event_name)
 
@@ -123,9 +125,9 @@ class BaaahsMap:
         self.canvas.delete(self.baaahs_id)
         self.baaahs_id = self.canvas.create_image(self.baaahs_pos[0], self.baaahs_pos[1], anchor='c', image=self.baaahs)
         self.add_message_to_box(new_gps_message_format.format(when=datetime.datetime.now(), lat=self.baaahs_pos_ll[0], long=self.baaahs_pos_ll[1]))
-        # self.canvas.pack()
     
     def add_message_to_box(self, message):
+        print("new baahs message", message)
         self.text_box.insert(tk.END, message)
         if self.text_box.size() > max_message_list_size:
             self.text_box.delete(0)
@@ -152,7 +154,6 @@ class BaaahsMap:
         return (output_x, output_y)
 
 
-
 MESSAGES_TOPIC = "bchat/rooms/main/*/messages"
 GPS_TOPIC = "bchat/rooms/main/sheep_loc"
 
@@ -165,12 +166,14 @@ man = dir + "/bchat-map/resources/the_man.pgm"
 baaahsMap = BaaahsMap(image, icon, man)
 
 def on_new_sheep_coords(client, userdata, message):
+    print(message.payload)
     new_lat = message.payload[0]
     new_long = message.payload[1]
     baaahsMap.set_new_baaahs_cords(new_lat, new_long)
 
 message_format = "[{date}]:[{who}]: {text}"
 def on_new_message(client, userdata, message):
+    print(message.payload)
     data = message.payload
     baaahsMap.add_message_to_box(message_format.format(date=data.Sent, who=data.From, text=data.Msg))
 
