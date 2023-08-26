@@ -5,11 +5,13 @@
     id: f9a8b020f741a5b52b888a88241fe6973b765fae
     keyserver: keyserver.ubuntu.com
 
-- name: Update all packages to the latest version
-  apt:
-    update_cache: yes
-    upgrade: dist
-    allow_unauthenticated: yes
+# TS: This was failing on the 2023 laptops so rather than debug we are just 
+# skipping it
+# - name: Update all packages to the latest version
+#   apt:
+#     update_cache: yes
+#     upgrade: dist
+#     allow_unauthenticated: yes
 
 - name: setting locale to {{ locale }}
   locale_gen:
@@ -98,3 +100,20 @@
     regexp: '".+"'
     before: \n
     replace: '"16x32"'
+
+
+- name: Download recent go
+  get_url:
+    url: https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    dest: /tmp/go1.21.0.linux-amd64.tar.gz
+
+- name: Remove old go
+  file:
+    path: /usr/local/go
+    state: absent
+
+- name: Extract current go
+  unarchive:
+    src: /tmp/go1.21.0.linux-amd64.tar.gz
+    dest: /usr/local
+    remote_src: yes

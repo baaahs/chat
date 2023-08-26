@@ -21,6 +21,12 @@ all:
       bchat_name: Camp
       mqtt_broker_hostname: camp-msg.local
 
+    # Tom's test machine
+    chromey.local:
+      ansible_user: tseago
+      bchat_name: Chromey
+      mqtt_broker_hostname: tompop.tomseago.com
+
   # Variables for all machines
   vars:
     ansible_user: baaahs

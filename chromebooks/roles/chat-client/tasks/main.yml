@@ -1,13 +1,17 @@
 ---
 
-- name: Install go so that we can build things locally
-  apt:
-    pkg: 
-      - golang
-    state: latest
+#Old way of doing the go stuff. No longer works now that we are on 1.20 and above
+# - name: Install go so that we can build things locally
+#   apt:
+#     pkg: 
+#       - golang
+#     state: latest
 
-- name: Fetch and build the client
-  command: go get -f -u github.com/baaahs/chat/bchat-tty
+# - name: Fetch and build the client
+#   command: go get -f -u github.com/baaahs/chat/bchat-tty
+
+- name: Install our code
+  command: /usr/local/go/bin/go install github.com/baaahs/chat/bchat-tty@latest
 
 - name: Copy the tty template file
   copy:
