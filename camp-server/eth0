@@ -1,0 +1,19 @@
+# Main interface
+auto eth0
+iface eth0 inet manual
+    up ip link set $IFACE up
+    down ip link set $IFACE down
+
+# VLAN interface with static IP
+auto eth0.0
+iface eth0.0 inet static
+    address 192.168.14.15
+    netmask 255.255.192.0
+    # If you have a gateway for this network
+    # gateway 192.168.1.1
+    vlan-raw-device eth0
+
+# VLAN interface for DHCP
+auto eth0.1
+iface eth0.1 inet dhcp
+    vlan-raw-device eth0
