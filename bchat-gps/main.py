@@ -44,8 +44,6 @@ def convert_to_degrees(raw_value, hemis):
         
     return position
     
-
-
 # NEO M9 stuff
 baud_rate = 38400
 
@@ -90,7 +88,7 @@ try:
 
             if (lat_in_degrees == 0 or long_in_degrees == 0):
                 continue
-            
+
             new_ll = (Decimal(lat_in_degrees), Decimal(long_in_degrees))
             if ((min_diff < abs(last_ll[0] - new_ll[0])) or min_diff < abs(last_ll[1] - new_ll[1])):
                 last_ll = new_ll
