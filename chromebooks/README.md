@@ -124,4 +124,17 @@ These should all be done via ansible
 * Set a good display mode/size for the tty
 
 
+Fix for q character on laptops
+==============================
+
+In 2023 right before the playa we discovered that the a "q" character would be displayed in the input field after all whitespace. So if you are typing a sentence like "Hello out there world" it would display in the input field as "Helloqoutqthereqworldq" or some such nonsense. The issue was that we had configure the tty to use the term type `linux` because, well, that is what the other terminals were configured for and it makes sense right? Well wrong, fuck you, ncurses doesn't work right when you do that.
+
+Thus the fix is to configure the terminal as `ansi` which seems to still preserve the color capabilities without fucking up other necessary things. The ansible task has been updated to do this correctly now, but here is the step by step manual fix that is probably easier on the playa (at least until we update the bchat code???)
+
+  * Get a root console, either via ssh or using one of the other virtual consoles (press CTRL-ALT-F2 etc.)
+  * As root, edit `/etc/systemd/system/getty@tty1.service`
+  * Search for the `ExecStart` line which specifies the `-/sbin/agetty`. Change the last parameter of this command from `linux` to `ansi`. This is the terminal type.
+  * Run `systemctl daemon-reload` to pick up the change to the service file
+
+After this you should be able to switch back to console 1 and hit `^C` to exit the application, which should then get restarted with the right terminal type. You _might_ need to restart the laptop, but probably not (although not a bad idea).
 
