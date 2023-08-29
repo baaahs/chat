@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 	"strconv"
 	"strings"
+	"time"
 )
 
 /*
@@ -46,6 +47,7 @@ type UI struct {
 	logText *tview.TextView
 
 	batteryLevel *tview.TextView
+	timeString   *tview.TextView
 	statusText   *tview.TextView
 	statusFlex   *tview.Flex
 
@@ -79,6 +81,11 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui.batteryLevel.
 		SetBackgroundColor(tcell.ColorBlue)
 
+	ui.timeString = tview.NewTextView().
+		SetScrollable(false)
+	ui.timeString.
+		SetBackgroundColor(tcell.ColorDarkCyan)
+
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
 		SetTextAlign(tview.AlignRight)
@@ -87,6 +94,7 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui.statusFlex = tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(ui.batteryLevel, 4, 0, false).
+		AddItem(ui.timeString, 11, 0, false).
 		AddItem(ui.statusText, 0, 4, false)
 
 	// And then a simple input field for the bottom of the screen
@@ -178,6 +186,7 @@ func (ui *UI) Run() {
 
 	// Start some go routines to update parts of the UI
 	go ui.batteryUpdater()
+	go ui.timeUpdater()
 
 	if err := ui.app.Run(); err != nil {
 		panic(err)
@@ -188,12 +197,24 @@ func (ui *UI) batteryUpdater() {
 	for {
 		percent := <-ui.ss.PowerPercent
 
-		log.Infof("batteryUpdater got %v", percent)
+		//log.Infof("batteryUpdater got %v", percent)
 		s := fmt.Sprintf("%v%%", percent)
-		log.Infof("Will set text to %v", s)
+		//log.Infof("Will set text to %v", s)
 		go func() {
 			ui.app.QueueUpdateDraw(func() {
 				ui.batteryLevel.SetText(s)
+			})
+		}()
+	}
+}
+
+func (ui *UI) timeUpdater() {
+	for {
+		timeStr := <-ui.ss.TimeString
+		//log.Infof("Got time str: %v", timeStr)
+		go func() {
+			ui.app.QueueUpdateDraw(func() {
+				ui.timeString.SetText(timeStr)
 			})
 		}()
 	}
@@ -234,7 +255,9 @@ func (ui *UI) RecvMessage(msg *Message) {
 	if msg.me {
 		color = "yellow"
 	}
-	_, err := fmt.Fprintf(ui.messageView, "[%v]%v[lightgray]: %v\n[-:-:-]", color, msg.From, msg.Msg)
+
+	_, err := fmt.Fprintf(ui.messageView, "[-:-:-]%v [%v]%v[lightgray]: %v\n[-:-:-]",
+		time.Unix(msg.Sent, 0).Format("15:04"), color, msg.From, msg.Msg)
 	if err != nil {
 		log.Errorf("Fprintf Err: %v", err)
 	}
