@@ -203,3 +203,43 @@ We'll write more about it later.
 [archercl]: https://github.com/eyethereal/go-archercl
 [bchat-tty]: #bchat-tty
 [mqtt]: http://mqtt.org
+
+# Coordinate Translations
+
+The following text (currently a work in progress) is the prompt give to ChatGPT to get it to write conversion code between latitude and longitude and into the Burning Map coordinate system.
+
+---
+The Burning Map festival uses a unique set of geospatial coordinates that are somewhat similar to polar coordinates. The primary index is known as "The Man" and is located at 40.786393 N by -119.203515 W (That is, in the Northern hemisphere in the State of Nevada). Directional radians are then given as "hours on a clock" starting with a prime radian which terminates at a point known as "The Temple" having a location of  40.791255 N by -119.197142 W. The direction from "The Man" to "The Temple" is known as "12:00" or "12 o'clock". Note that these clock numbers increase in a "clock wise" direction, which is the opposite of the mathematical definition of radians.
+
+Locations within this festival are given with two coordinates. The first is the "hour of the clock" which corresponds to the radial direction as referenced from the temple. It is very important to note that this direction is from the direction of the temple, and NOT from North. The second coordinate is the distance from the man in feet along the specified radial. When the distance from the man to the destination point is less than 0.25 mile2, radials are specified only to the closest 30 minutes. From 0.25 mile to 1.25 miles they are specified to the nearest 15 minutes, and beyond 1.25 miles they are specified to the nearest 5 minutes.
+
+Write a function, using this information, that when given a latitude and longitude will return the clock time and distance from the man. Be sure to note the direction of increasing radials (clockwise) as specified above. Furthermore, the time value should be output as a string value formatted as though it is from a clock.
+
+---
+
+That pretty much worked!!!
+
+Except for where it doesn't really.... Math is hard
+
+
+The latitude and longitude will be specified using the "Decimal" big number library such as `output = find_coords(Decimal("40.779526"),Decimal("-119.203484"))`
+
+After writing this function, use it to find the location for the following points:
+# United Site Services
+find_bm_coords(Decimal("40.777"),Decimal("-119.223849"))
+# Greeters
+find_bm_coords(Decimal("40.773028"),Decimal("-119.220986"))
+# 4:30 & G Plaza
+find_bm_coords(Decimal("40.772994"),Decimal("-119.203467"))
+# Point 4
+find_bm_coords(Decimal("40.776026"),Decimal("-119.17628"))
+# Point 3
+find_bm_coords(Decimal("40.80288"),Decimal("-119.182115"))
+# Hell Station
+find_bm_coords(Decimal("40.803056"),Decimal("-119.209183"))
+# 1200 Promenade
+find_bm_coords(Decimal("40.788818"),Decimal("-119.200315"))
+# 730 Portal
+find_bm_coords(Decimal("40.786374"),Decimal("-119.212529"))
+# 430 Portal
+find_bm_coords(Decimal("40.779526"),Decimal("-119.203484"))

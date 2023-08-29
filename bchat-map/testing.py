@@ -20,7 +20,7 @@ def on_connect(client, userdata, flags, rc):
 def on_publish(a,b,c):
     print("on_publish called, Publish is done")
 
-mqtt_host="localhost"
+mqtt_host="tompop.tomseago.com"
 mqtt_port=1883
 mqtt_id="testing"
 

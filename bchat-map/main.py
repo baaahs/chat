@@ -5,6 +5,7 @@ import os
 import paho.mqtt.client as mqtt
 import datetime
 import json
+import math
 
 # Parse command line args for fun and profit (and to make development life easier)
 import argparse
@@ -189,6 +190,9 @@ class BaaahsMap:
         point_loc = self.normalize_coords(lat, long)
         self.canvas.create_image(point_loc[0], point_loc[1], anchor=tk.CENTER, image=self.crosshair_img)
 
+        t,d = burning_man_coordinates(lat, long)
+        print("For ",lat,", ",long,"  time=",t," distance=",d)
+
     def add_test_points(self):
         # United Site Services
         self.add_test_point(Decimal("40.777"),Decimal("-119.223849"))
@@ -215,6 +219,55 @@ class BaaahsMap:
 
         self.add_test_point(lat_min_bound + ((lat_max_bound - lat_min_bound)/2),
                             long_min_bound + ((long_max_bound - long_min_bound)/2))
+
+
+####################
+# Some code from ChatGPT to get friendly coordinates in a burning man context
+earth_radius = 6371e3  # meters
+
+def haversine(lat1, lon1, lat2, lon2):
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    distance = earth_radius * c
+    return distance
+
+
+def burning_man_coordinates(lat, lon):
+    # Calculate distance from Man to input coordinates
+    distance = haversine(ll_man[0], ll_man[1], lat, lon)
+
+    # Calculate angle from Man to input coordinates
+    y = lat - ll_man[0]
+    x = lon - ll_man[1]
+    angle = math.atan2(y, x)
+
+    # Adjust angle for Burning Man coordinate system
+    # 12:00 corresponds to the direction from Man to Temple
+    angle_to_temple = math.atan2(ll_temple[0] - ll_man[0], ll_temple[1] - ll_man[1])
+    angle -= angle_to_temple
+    if angle < 0:
+        angle += 2 * math.pi
+
+    # Convert angle to clock time
+    hours = 12 - angle * 12 / (2 * math.pi)
+    if hours == 12:
+        hours = 0
+    minutes = (hours - math.floor(hours)) * 60
+    time = "{:02}:{:02}".format(int(math.floor(hours)), int(round(minutes)))
+
+    # Convert distance to feet
+    distance_feet = distance * 3.28084
+
+    return time, distance_feet
+
+
+####################
+
+
 
 MESSAGES_TOPIC = "bchat/rooms/main/*/messages"
 GPS_TOPIC = "bchat/rooms/main/sheep_loc"

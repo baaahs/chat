@@ -49,6 +49,7 @@ type UI struct {
 	batteryLevel *tview.TextView
 	timeString   *tview.TextView
 	statusText   *tview.TextView
+	sheepLoc     *tview.TextView
 	statusFlex   *tview.Flex
 
 	mainFlex *tview.Flex
@@ -86,6 +87,8 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 	ui.timeString.
 		SetBackgroundColor(tcell.ColorDarkCyan)
 
+	ui.sheepLoc = tview.NewTextView().SetScrollable(false)
+
 	ui.statusText = tview.NewTextView().
 		SetScrollable(false).
 		SetTextAlign(tview.AlignRight)
@@ -95,6 +98,7 @@ func NewUI(cfg *archercl.AclNode, net *Network, ss *SysStat) *UI {
 		SetDirection(tview.FlexColumn).
 		AddItem(ui.batteryLevel, 4, 0, false).
 		AddItem(ui.timeString, 11, 0, false).
+		AddItem(ui.sheepLoc, 30, 1, false).
 		AddItem(ui.statusText, 0, 4, false)
 
 	// And then a simple input field for the bottom of the screen
@@ -223,6 +227,27 @@ func (ui *UI) timeUpdater() {
 func (ui *UI) Refresh() {
 	//log.Info("Refresh")
 
+	///////
+
+	// Sheep Location, if any
+	locationText := ""
+	if !ui.net.haveSheepPos {
+		ui.sheepLoc.SetBackgroundColor(tcell.ColorRed)
+		if len(ui.net.sheepPosErrorStr) > 0 {
+			locationText = ui.net.sheepPosErrorStr
+		} else {
+			locationText = " No Sheep Location "
+		}
+	} else {
+		// We have something!
+		ui.sheepLoc.SetBackgroundColor(tcell.ColorBlack)
+		locationText = fmt.Sprintf(" %0.7f\u00b0N, %0.7f\u00b0W",
+			ui.net.sheepLat, ui.net.sheepLon)
+		log.Warningf("locationText='%v'", locationText)
+	}
+
+	//////
+
 	status := "Disconnected"
 	if ui.net.err != nil {
 		status = "ERROR"
@@ -239,6 +264,7 @@ func (ui *UI) Refresh() {
 
 	go func() {
 		ui.app.QueueUpdateDraw(func() {
+			ui.sheepLoc.SetText(locationText)
 			ui.statusText.SetText(statusLine)
 		})
 	}()
@@ -270,6 +296,10 @@ func (ui *UI) RecvMessage(msg *Message) {
 	// the UI library documentation it is NOT safe to call Draw() from the
 	// main routine, which we didn't know and had it sprinkled all over.
 	// Thus - deadlocks. Oops! :)
+
+	// THe way to always fix this should be to always call it from a goroutine
+	// right??? Probably. Not taking that chance at the moment because
+	// people are already on playa and it seems fine. (at the moment anyway)
 	ui.app.Draw()
 }
 

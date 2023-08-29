@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -102,6 +104,16 @@ type Network struct {
 	TimeToDie chan bool
 
 	publishTopic string
+
+	// This should NOT be here, but I guess it makes sense as
+	// maintaining what is known on the network (vs. what might have been cached
+	// locally)
+	sheepLat float64
+	sheepLon float64
+
+	haveSheepPos     bool
+	sheepPosAt       time.Time
+	sheepPosErrorStr string
 }
 
 func NewNetwork(cfg *archercl.AclNode) *Network {
@@ -273,9 +285,44 @@ func (bnet *Network) gotMessage(recv *paho.Publish) {
 }
 
 func (bnet *Network) gotSheepLoc(msg *paho.Publish) {
-	str := msg.String()
+	str := string(msg.Payload)
 
 	log.Debugf("SheepLoc: %v", str)
+
+	// Let's try and figure out if it's a simple or more complex format
+	ix := strings.Index(str, ":") /// This will be there in JSON
+	if ix == -1 {
+		// Treat it as a simple string
+		list := strings.Split(str, ",")
+		if len(list) < 2 {
+			bnet.sheepPosErrorStr = fmt.Sprintf("ERR: Bad loc #{str}")
+			bnet.haveSheepPos = false
+		} else {
+			// Okay cool, turn it into two float64's!
+			lat, err_lat := strconv.ParseFloat(list[0], 64)
+			lon, err_lon := strconv.ParseFloat(list[1], 64)
+			if err_lat != nil || err_lon != nil {
+				bnet.sheepPosErrorStr = fmt.Sprintf("ERR: Unparsable #{str}")
+				bnet.haveSheepPos = false
+			} else {
+				bnet.sheepLat = lat
+				bnet.sheepLon = lon
+				bnet.haveSheepPos = true
+				bnet.sheepPosAt = time.Now()
+				bnet.sheepPosErrorStr = ""
+				log.Infof("Saved sheep location as %v, %v at ", bnet.sheepLat, bnet.sheepLon, bnet.sheepPosAt)
+			}
+		}
+	} else {
+		log.Errorf("Position is probably JSON but we aren't ready ix=%v str='%v'", ix, str)
+		bnet.sheepPosErrorStr = "ERROR: JSON Position"
+		bnet.haveSheepPos = false
+	}
+
+	if bnet.RefreshUI != nil {
+		bnet.RefreshUI()
+	}
+
 }
 
 // SendText will send the given string in the given context, which should
