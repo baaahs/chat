@@ -234,7 +234,8 @@ func (ui *UI) Refresh() {
 	if len(shortId) > 9 {
 		shortId = fmt.Sprintf("...%s", shortId[len(shortId)-6:])
 	}
-	statusLine := fmt.Sprintf("id:%v mqtt:%v", shortId, status)
+
+	statusLine := fmt.Sprintf("v:01 id:%v mqtt:%v", shortId, status)
 
 	go func() {
 		ui.app.QueueUpdateDraw(func() {
