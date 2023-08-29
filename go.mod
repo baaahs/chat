@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/eclipse/paho.golang v0.11.0 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell/v2 v2.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect

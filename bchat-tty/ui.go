@@ -205,7 +205,7 @@ func (ui *UI) Refresh() {
 	status := "Disconnected"
 	if ui.net.err != nil {
 		status = "ERROR"
-	} else if ui.net.c.IsConnectionOpen() {
+	} else if ui.net.IsConnected() {
 		status = "Connected"
 	}
 
@@ -291,7 +291,29 @@ func (ui *UI) handleLine(line string) {
 			log.Error(e)
 			return
 		}
-		ui.net.SendText(uq)
+
+		// Do this on a co-routine because it might fail
+		go ui.sendText(uq)
+	}
+}
+
+// sendText will send a string as a message. It expects to be invoked on a co-routine and
+// not directly running on the main routine. This is important because when things go south
+// it is going to call ui.app.Draw() which MUST NOT happen on the main routine or
+// nasty deadlocks occur. So don't do that. Always call this on a coroutine or as
+// a coroutine!
+func (ui *UI) sendText(unquoted string) {
+	if ui.net == nil {
+		ui.sysText("ERROR: No network object. Did not send message")
+		ui.app.Draw()
+		return
+	}
+
+	err := ui.net.SendText(nil, unquoted)
+	if err != nil {
+		errStr := fmt.Sprintf("ERROR: Failed to send msg (%v): %v", unquoted, err)
+		ui.sysText(errStr)
+		ui.app.Draw()
 	}
 }
 
@@ -344,12 +366,12 @@ func (ui *UI) cmdLorem(words []string) {
 
 		if *chars == 0 || *chars < 0 {
 			// The whole thing
-			ui.net.SendText(src)
+			ui.sendText(src)
 			continue
 		}
 
 		if *chars <= len(src) {
-			ui.net.SendText(src[:*chars])
+			ui.sendText(src[:*chars])
 		} else {
 			ui.sysText(fmt.Sprintf("only have %v chars of that", len(src)))
 		}
@@ -490,7 +512,7 @@ func (ui *UI) Log(level logging.Level, calldepth int, rec *logging.Record) error
 		prefix = "[cyan]"
 
 	case logging.INFO:
-		prefix = ""
+		prefix = "[-:-:-]"
 
 	case logging.NOTICE:
 		prefix = "[green]"
